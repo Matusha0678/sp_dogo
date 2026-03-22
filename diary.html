@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Дневник — IronTrack</title>
+<link rel="stylesheet" href="_style.css"/>
+<style>
+body { overflow-x: hidden; }
+.pw { padding: 0; max-width: 100%; }
+.split { display: flex; min-height: 100vh; }
+
+/* SIDEBAR */
+.sidebar {
+  position: fixed; top: 60px; left: 0; bottom: 0; width: 260px;
+  background: var(--bg2); border-right: 1px solid var(--wire);
+  display: flex; flex-direction: column; z-index: 100;
+}
+.sb-header { padding: 24px 22px 16px; border-bottom: 1px solid var(--wire); }
+.sb-title { font-family: 'Instrument Serif', serif; font-size: 26px; font-weight: 400; color: var(--t0); margin-bottom: 3px; }
+.sb-sub { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--t2); letter-spacing: 2px; text-transform: uppercase; }
+
+/* MOOD PICKER */
+.sb-mood { padding: 14px 22px; border-bottom: 1px solid var(--wire); }
+.sb-mood-ttl { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--t1); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; font-weight: 500; }
+.mood-row { display: flex; gap: 6px; }
+.mood-btn {
+  flex: 1; padding: 8px 4px; border-radius: 8px;
+  background: var(--bg3); border: 1px solid var(--wire);
+  cursor: pointer; text-align: center; font-size: 16px;
+  transition: all .15s;
+}
+.mood-btn:hover { border-color: var(--wire2); background: var(--bg4); }
+.mood-btn.active { background: var(--cream-a); border-color: rgba(232,220,200,.25); }
+.mood-label { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--t2); margin-top: 3px; }
+
+/* SLEEP */
+.sb-sleep { padding: 14px 22px; border-bottom: 1px solid var(--wire); }
+.sb-sleep-ttl { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--t1); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; font-weight: 500; }
+.sleep-row { display: flex; align-items: center; gap: 10px; }
+.sleep-val { font-family: 'Instrument Serif', serif; font-size: 32px; color: var(--cream); line-height: 1; min-width: 56px; }
+.sleep-btns { display: flex; flex-direction: column; gap: 4px; }
+.sleep-btn {
+  width: 28px; height: 20px; background: var(--bg3); border: 1px solid var(--wire);
+  border-radius: 5px; cursor: pointer; color: var(--t1); font-size: 12px;
+  display: flex; align-items: center; justify-content: center; transition: background .12s;
+}
+.sleep-btn:hover { background: var(--bg4); }
+.sleep-unit { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--t2); }
+
+/* ENERGY */
+.sb-energy { padding: 14px 22px; border-bottom: 1px solid var(--wire); }
+.sb-energy-ttl { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--t1); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; font-weight: 500; }
+.energy-bar { display: flex; gap: 4px; }
+.eb {
+  flex: 1; height: 28px; border-radius: 5px;
+  background: var(--bg3); border: 1px solid var(--wire);
+  cursor: pointer; transition: all .15s;
+}
+.eb.active { background: var(--cream-a); border-color: rgba(232,220,200,.3); }
+
+/* ENTRIES LIST */
+.sb-entries { flex: 1; overflow-y: auto; padding: 8px 0; }
+.entry-item {
+  padding: 11px 22px; cursor: pointer;
+  border-bottom: 1px solid var(--wire); transition: background .12s;
+  display: flex; align-items: center; gap: 10px;
+}
+.entry-item:hover { background: var(--bg3); }
+.entry-item.active { background: var(--bg3); }
+.entry-date { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--t2); flex: 1; }
+.entry-mood-icon { font-size: 14px; }
+.entry-preview { font-size: 12px; color: var(--t3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
+
+/* CONTENT */
+.content { margin-left: 260px; padding: 48px 52px 72px; flex: 1; }
+
+/* DATE HEADER */
+.date-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid var(--wire);
+}
+.date-nav { display: flex; align-items: center; gap: 12px; }
+.date-btn {
+  width: 34px; height: 34px; border-radius: 8px;
+  background: var(--bg2); border: 1px solid var(--wire);
+  color: var(--t1); cursor: pointer; font-size: 14px;
+  display: flex; align-items: center; justify-content: center; transition: all .12s;
+}
+.date-btn:hover { background: var(--bg3); border-color: var(--wire2); }
+.current-date { font-family: 'Instrument Serif', serif; font-size: 28px; font-weight: 400; color: var(--t0); }
+.date-today-btn {
+  font-family: 'DM Mono', monospace; font-size: 10px; color: var(--t2);
+  background: var(--bg2); border: 1px solid var(--wire); border-radius: 6px;
+  padding: 5px 10px; cursor: pointer; letter-spacing: 1px; text-transform: uppercase; transition: all .12s;
+}
+.date-today-btn:hover { border-color: var(--wire2); color: var(--t0); }
+
+/* ENTRY META ROW */
+.meta-row {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 24px;
+}
+.meta-card {
+  background: var(--bg2); border: 1px solid var(--wire); border-radius: 12px;
+  padding: 14px 16px; text-align: center;
+}
+.meta-card-val { font-family: 'Instrument Serif', serif; font-size: 28px; color: var(--t0); line-height: 1; margin-bottom: 4px; }
+.meta-card-lbl { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--t2); text-transform: uppercase; letter-spacing: 1px; }
+
+/* EDITOR */
+.editor-wrap { background: var(--bg2); border: 1px solid var(--wire); border-radius: 14px; overflow: hidden; margin-bottom: 16px; }
+.editor-toolbar {
+  padding: 10px 16px; border-bottom: 1px solid var(--wire);
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+.tb-btn {
+  padding: 4px 10px; border-radius: 5px; border: 1px solid var(--wire);
+  background: transparent; color: var(--t2); font-size: 12px; cursor: pointer;
+  font-family: 'DM Mono', monospace; transition: all .12s; letter-spacing: .5px;
+}
+.tb-btn:hover { background: var(--bg3); color: var(--t0); border-color: var(--wire2); }
+.tb-sep { width: 1px; height: 18px; background: var(--wire2); margin: 0 2px; }
+.editor-area {
+  width: 100%; min-height: 280px; padding: 20px 22px;
+  background: transparent; border: none; outline: none;
+  color: var(--t0); font-family: 'DM Sans', sans-serif; font-size: 15px; line-height: 1.8;
+  resize: none;
+}
+.editor-area::placeholder { color: var(--t3); }
+
+/* TAGS */
+.tags-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; align-items: center; }
+.tags-lbl { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--t1); text-transform: uppercase; letter-spacing: 1px; font-weight: 500; }
+.tag-chip {
+  padding: 4px 12px; border-radius: 20px;
+  background: var(--bg2); border: 1px solid var(--wire);
+  font-family: 'DM Mono', monospace; font-size: 11px; color: var(--t2);
+  cursor: pointer; transition: all .12s; letter-spacing: .5px;
+}
+.tag-chip:hover { border-color: var(--wire2); color: var(--t0); }
+.tag-chip.active { background: var(--cream-a); border-color: rgba(232,220,200,.25); color: var(--cream); }
+
+/* SAVE */
+.save-bar { display: flex; justify-content: space-between; align-items: center; }
+.char-count { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--t3); }
+
+@media(max-width:860px){
+  .sidebar { position: static; width: 100%; height: auto; top: auto; }
+  .sb-mood { padding: 12px 16px; }
+  .sb-sleep { padding: 12px 16px; }
+  .sb-energy { padding: 12px 16px; }
+  .content { margin-left: 0; padding: 24px 20px; }
+  .meta-grid { grid-template-columns: repeat(2,1fr); }
+  .editor-area { min-height: 200px; padding: 16px 18px; }
+  .sec-title { font-size: 32px; }
+}
+
+@media(max-width:480px){
+  .sidebar { padding: 0; }
+  .sb-header { padding: 16px 16px 12px; }
+  .sb-title { font-size: 20px; }
+  .sb-mood { padding: 12px 16px; }
+  .sb-mood-ttl { font-size: 10px; margin-bottom: 8px; }
+  .mood-row { gap: 4px; }
+  .mood-btn { padding: 6px 2px; font-size: 14px; }
+  .mood-label { font-size: 8px; margin-top: 2px; }
+  .sb-sleep { padding: 12px 16px; }
+  .sb-sleep-ttl { font-size: 10px; margin-bottom: 8px; }
+  .sleep-val { font-size: 24px; min-width: 48px; }
+  .sleep-btn { width: 24px; height: 18px; font-size: 10px; }
+  .sb-energy { padding: 12px 16px; }
+  .content { padding: 20px 12px; }
+  .meta-grid { grid-template-columns: 1fr; gap: 10px; }
+  .meta-card { padding: 12px 14px; border-radius: 10px; }
+  .meta-card-val { font-size: 24px; margin-bottom: 3px; }
+  .meta-card-lbl { font-size: 9px; }
+  .editor-wrap { border-radius: 12px; margin-bottom: 12px; }
+  .editor-toolbar { padding: 8px 12px; gap: 4px; }
+  .tb-btn { padding: 3px 8px; font-size: 11px; }
+  .editor-area { min-height: 160px; padding: 14px 16px; font-size: 14px; }
+  .tags-row { gap: 6px; margin-bottom: 16px; }
+  .tags-lbl { font-size: 10px; }
+  .tag-chip { padding: 3px 10px; font-size: 10px; }
+  .save-bar { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .char-count { font-size: 10px; }
+  .sec-title { font-size: 24px; }
+}
+</style>
+</head>
+<body>
+<div class="loader" id="loader">
+  <div class="loader-logo">Iron<em>Track</em></div>
+  <div class="loader-bar" aria-hidden="true"></div>
+</div>
+
+<nav class="nav">
+  <a class="nav-logo" href="index.html">Iron<span>Track</span></a>
+    <div class="nav-links">
+    <a href="index.html">Главная</a>
+    <a href="workout.html">Тренировки</a>
+    <a href="nutrition.html">Питание</a>
+    <a href="progress.html">Прогресс</a>
+    <a href="stats.html">Статистика</a>
+    <a href="diary.html" class="active">Дневник</a>
+    <a href="ai.html">ИИ</a>
+  </div>
+  <div class="nav-right">
+    <a href="profile.html" style="width:44px;height:44px;border-radius:50%;background:var(--bg3);border:1px solid var(--wire2);display:flex;align-items:center;justify-content:center;text-decoration:none;font-family:'Instrument Serif',serif;font-size:14px;color:var(--cream);transition:border-color .15s" id="nav-avatar">?</a><button class="nav-logout" onclick="doLogout()">Выйти</button>
+    <a class="nav-cta" href="ai.html">✦ Анализ</a>
+  </div>
+  <button class="nav-hamburger" id="nav-hamburger" onclick="toggleNavMenu()">☰</button>
+</nav>
+
+<div class="pw">
+  <div class="split">
+    <aside class="sidebar">
+      <div class="sb-header">
+        <div class="sb-title">Дневник</div>
+        <div class="sb-sub">Ежедневные записи</div>
+      </div>
+
+      <!-- MOOD -->
+      <div class="sb-mood">
+        <div class="sb-mood-ttl">Настроение</div>
+        <div class="mood-row">
+          <div class="mood-btn" data-mood="5" onclick="setMood(this)"><div>😄</div><div class="mood-label">отлично</div></div>
+          <div class="mood-btn active" data-mood="4" onclick="setMood(this)"><div>🙂</div><div class="mood-label">хорошо</div></div>
+          <div class="mood-btn" data-mood="3" onclick="setMood(this)"><div>😐</div><div class="mood-label">норм</div></div>
+          <div class="mood-btn" data-mood="2" onclick="setMood(this)"><div>😔</div><div class="mood-label">плохо</div></div>
+          <div class="mood-btn" data-mood="1" onclick="setMood(this)"><div>😤</div><div class="mood-label">ужасно</div></div>
+        </div>
+      </div>
+
+      <!-- SLEEP -->
+      <div class="sb-sleep">
+        <div class="sb-sleep-ttl">Сон</div>
+        <div class="sleep-row">
+          <div class="sleep-val" id="sleep-val">8</div>
+          <div class="sleep-btns">
+            <button class="sleep-btn" onclick="changeSleep(1)">▲</button>
+            <button class="sleep-btn" onclick="changeSleep(-1)">▼</button>
+          </div>
+          <div class="sleep-unit">часов</div>
+        </div>
+      </div>
+
+      <!-- ENERGY -->
+      <div class="sb-energy">
+        <div class="sb-energy-ttl">Энергия</div>
+        <div class="energy-bar" id="energy-bar">
+          <div class="eb active" data-e="1" onclick="setEnergy(this)"></div>
+          <div class="eb active" data-e="2" onclick="setEnergy(this)"></div>
+          <div class="eb active" data-e="3" onclick="setEnergy(this)"></div>
+          <div class="eb" data-e="4" onclick="setEnergy(this)"></div>
+          <div class="eb" data-e="5" onclick="setEnergy(this)"></div>
+        </div>
+      </div>
+
+      <!-- ENTRIES -->
+      <div class="sb-entries" id="entries-list">
+        <div style="padding:16px 22px;font-family:'DM Mono',monospace;font-size:11px;color:var(--t3)">загрузка...</div>
+      </div>
+    </aside>
+
+    <div class="content" id="main-content" style="opacity:0;transition:opacity .2s ease">
+      <div class="date-bar">
+        <div class="date-nav">
+          <button class="date-btn" onclick="changeDay(-1)">←</button>
+          <div class="current-date" id="current-date">—</div>
+          <button class="date-btn" onclick="changeDay(1)">→</button>
+        </div>
+        <button class="date-today-btn" onclick="goToday()">Сегодня</button>
+      </div>
+
+      <div class="meta-row">
+        <div class="meta-card">
+          <div class="meta-card-val" id="meta-mood">—</div>
+          <div class="meta-card-lbl">Настроение</div>
+        </div>
+        <div class="meta-card">
+          <div class="meta-card-val" id="meta-sleep">—</div>
+          <div class="meta-card-lbl">Часов сна</div>
+        </div>
+        <div class="meta-card">
+          <div class="meta-card-val" id="meta-energy">—</div>
+          <div class="meta-card-lbl">Энергия / 5</div>
+        </div>
+      </div>
+
+      <div class="tags-row">
+        <span class="tags-lbl">Теги:</span>
+        <span class="tag-chip" onclick="toggleTag(this)">тренировка</span>
+        <span class="tag-chip" onclick="toggleTag(this)">отдых</span>
+        <span class="tag-chip" onclick="toggleTag(this)">питание</span>
+        <span class="tag-chip active" onclick="toggleTag(this)">прогресс</span>
+        <span class="tag-chip" onclick="toggleTag(this)">стресс</span>
+        <span class="tag-chip" onclick="toggleTag(this)">мотивация</span>
+        <span class="tag-chip" onclick="toggleTag(this)">травма</span>
+        <span class="tag-chip" onclick="toggleTag(this)">соревнование</span>
+      </div>
+
+      <div class="editor-wrap">
+        <div class="editor-toolbar">
+          <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--t2);letter-spacing:1px;text-transform:uppercase;margin-right:4px">Запись</span>
+          <div class="tb-sep"></div>
+          <button class="tb-btn" onclick="insertText('**','**')">B</button>
+          <button class="tb-btn" onclick="insertText('_','_')" style="font-style:italic">I</button>
+          <button class="tb-btn" onclick="insertLine('— ')">—</button>
+          <button class="tb-btn" onclick="insertLine('✓ ')">✓</button>
+          <button class="tb-btn" onclick="insertLine('→ ')">→</button>
+        </div>
+        <textarea class="editor-area" id="entry-text" placeholder="Что сегодня произошло? Как прошла тренировка? Что чувствуешь..." oninput="updateCount()"></textarea>
+      </div>
+
+      <div class="save-bar">
+        <div class="char-count" id="char-count">0 символов</div>
+        <button class="btn btn-lime" onclick="saveEntry()">Сохранить запись</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="config.js"></script>
+<script src="_supabase.js"></script>
+<script>
+requireAuth(); const user = getUser();
+async function doLogout(){ await signOut(); window.location.href='login.html'; }
+
+const MOOD_LABELS = {5:'😄',4:'🙂',3:'😐',2:'😔',1:'😤'};
+let currentDate = new Date();
+let currentMood = 4, currentSleep = 8, currentEnergy = 3;
+let entries = {}, dbId = null;
+const TAGS_KEY = 'diary_tags';
+
+function dateKey(d){ return d.toISOString().slice(0,10); }
+function formatDate(d){ return d.toLocaleDateString('ru',{weekday:'long',day:'numeric',month:'long'}); }
+
+async function init(){
+  try{
+    const rows = await dbGet('diary',`user_id=eq.${user.id}&limit=1`);
+    if(rows&&rows[0]){ entries=rows[0].entries||{}; dbId=rows[0].id; }
+  }catch(e){ console.error(e); }
+  renderDay();
+  renderSidebar();
+  document.getElementById('main-content').style.opacity='1';
+}
+
+function renderDay(){
+  const key = dateKey(currentDate);
+  document.getElementById('current-date').textContent = formatDate(currentDate);
+  const entry = entries[key]||{};
+  currentMood = entry.mood||4;
+  currentSleep = entry.sleep||8;
+  currentEnergy = entry.energy||3;
+  document.getElementById('entry-text').value = entry.text||'';
+  document.getElementById('sleep-val').textContent = currentSleep;
+  updateCount();
+
+  // mood btns
+  document.querySelectorAll('.mood-btn').forEach(b => b.classList.toggle('active', +b.dataset.mood===currentMood));
+  // energy
+  document.querySelectorAll('.eb').forEach(b => b.classList.toggle('active', +b.dataset.e<=currentEnergy));
+  // meta
+  document.getElementById('meta-mood').textContent = MOOD_LABELS[currentMood]||'—';
+  document.getElementById('meta-sleep').textContent = currentSleep;
+  document.getElementById('meta-energy').textContent = currentEnergy;
+  // tags
+  const tags = entry.tags||[];
+  document.querySelectorAll('.tag-chip').forEach(t => t.classList.toggle('active', tags.includes(t.textContent.trim())));
+}
+
+function renderSidebar(){
+  const sorted = Object.entries(entries).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,20);
+  const key = dateKey(currentDate);
+  document.getElementById('entries-list').innerHTML = sorted.length
+    ? sorted.map(([k,e])=>`
+      <div class="entry-item${k===key?' active':''}" onclick="goDate('${k}')">
+        <div>
+          <div class="entry-date">${new Date(k+'T12:00').toLocaleDateString('ru',{day:'numeric',month:'short'})}</div>
+          <div class="entry-preview">${(e.text||'').slice(0,40)||'—'}</div>
+        </div>
+        <div class="entry-mood-icon">${MOOD_LABELS[e.mood]||''}</div>
+      </div>`).join('')
+    : '<div style="padding:16px 22px;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--t3)">нет записей</div>';
+}
+
+function goDate(k){ currentDate=new Date(k+'T12:00'); renderDay(); renderSidebar(); }
+function goToday(){ currentDate=new Date(); renderDay(); renderSidebar(); }
+function changeDay(d){ currentDate=new Date(currentDate.getTime()+d*86400000); renderDay(); renderSidebar(); }
+function setMood(btn){ currentMood=+btn.dataset.mood; document.querySelectorAll('.mood-btn').forEach(b=>b.classList.toggle('active',+b.dataset.mood===currentMood)); document.getElementById('meta-mood').textContent=MOOD_LABELS[currentMood]; }
+function changeSleep(d){ currentSleep=Math.max(0,Math.min(24,currentSleep+d)); document.getElementById('sleep-val').textContent=currentSleep; document.getElementById('meta-sleep').textContent=currentSleep; }
+function setEnergy(btn){ currentEnergy=+btn.dataset.e; document.querySelectorAll('.eb').forEach(b=>b.classList.toggle('active',+b.dataset.e<=currentEnergy)); document.getElementById('meta-energy').textContent=currentEnergy; }
+function toggleTag(el){ el.classList.toggle('active'); }
+function updateCount(){ const t=document.getElementById('entry-text').value; document.getElementById('char-count').textContent=t.length+' символов'; }
+
+function insertText(before,after){
+  const ta=document.getElementById('entry-text');
+  const s=ta.selectionStart,e=ta.selectionEnd;
+  const sel=ta.value.slice(s,e);
+  ta.value=ta.value.slice(0,s)+before+sel+after+ta.value.slice(e);
+  ta.selectionStart=s+before.length; ta.selectionEnd=e+before.length;
+  ta.focus(); updateCount();
+}
+function insertLine(prefix){
+  const ta=document.getElementById('entry-text');
+  const pos=ta.selectionStart;
+  const before=ta.value.slice(0,pos);
+  const after=ta.value.slice(pos);
+  const nl=before.length&&!before.endsWith('\n')?'\n':'';
+  ta.value=before+nl+prefix+after;
+  const np=pos+nl.length+prefix.length;
+  ta.selectionStart=ta.selectionEnd=np;
+  ta.focus(); updateCount();
+}
+
+async function saveEntry(){
+  const key = dateKey(currentDate);
+  const tags = [...document.querySelectorAll('.tag-chip.active')].map(t=>t.textContent.trim());
+  entries[key] = { text:document.getElementById('entry-text').value, mood:currentMood, sleep:currentSleep, energy:currentEnergy, tags, updated:new Date().toISOString() };
+  try{
+    const p={user_id:user.id,entries,updated_at:new Date().toISOString()};
+    if(dbId)p.id=dbId;
+    const res=await dbUpsert('diary',p);
+    if(res&&res[0]&&!dbId)dbId=res[0].id;
+    toast('записано','ok');
+    renderSidebar();
+  }catch(e){ toast('ошибка: '+e.message,'err'); }
+}
+
+function toast(msg,tp){ const t=document.getElementById('toast'); t.textContent=msg; t.className='toast show '+tp; setTimeout(()=>t.className='toast',2200); }
+init();
+</script>
+<script>
+function toggleNavMenu(){
+  var links = document.querySelector('.nav-links');
+  if(!links) return;
+  links.classList.toggle('mobile-open');
+}
+
+(function(){
+  function navigate(url){ document.body.classList.add('leaving'); setTimeout(function(){ window.location.href=url; },180); }
+  document.addEventListener('click',function(e){
+    var a=e.target.closest('a'); if(!a) return;
+    var href=a.getAttribute('href');
+    if(!href||href.charAt(0)==='#'||href.startsWith('http')||href.startsWith('mailto')||a.target==='_blank') return;
+    e.preventDefault(); navigate(href);
+  });
+})();
+</script>
+</body>
+</html>

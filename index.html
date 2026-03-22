@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>IronTrack</title>
+<link rel="stylesheet" href="_style.css"/>
+<style>
+body { overflow-x: hidden; }
+.pw { padding: 0; max-width: 100%; }
+
+/* LOADER */
+.loader{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+.loader-logo{font-family:'Instrument Serif',serif;font-size:32px;letter-spacing:2px;color:var(--cream)}
+.loader-logo em{color:var(--t3);font-style:italic}
+.loader-bar{width:60px;height:1px;background:var(--bg4);position:relative;overflow:hidden}
+.loader-bar::after{content:'';position:absolute;top:0;left:-60%;width:60%;height:100%;background:var(--cream);animation:lb 1.2s ease-in-out infinite}
+@keyframes lb{to{left:160%}}
+
+/* HERO — modern full-width design */
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 48px;
+  padding: 60px 48px;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(240,230,210,0.05) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-left {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--cream);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hero-eyebrow::before {
+  content: '';
+  width: 24px;
+  height: 1px;
+  background: var(--cream);
+  display: inline-block;
+}
+
+.hero-name {
+  font-family: 'Instrument Serif', serif;
+  font-size: 64px;
+  line-height: 1.1;
+  letter-spacing: -2px;
+  color: var(--t0);
+  margin-bottom: 24px;
+}
+
+.hero-name em {
+  font-style: italic;
+  color: var(--cream);
+}
+
+.hero-desc {
+  font-size: 16px;
+  color: var(--t2);
+  line-height: 1.6;
+  margin-bottom: 32px;
+  max-width: 500px;
+}
+
+.hero-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-date {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: var(--t2);
+  text-align: right;
+  line-height: 1.8;
+}
+
+.hero-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-end;
+}
+
+.hero-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.hero-stat-val {
+  font-family: 'Instrument Serif', serif;
+  font-size: 32px;
+  color: var(--cream);
+  font-weight: 400;
+}
+
+.hero-stat-label {
+  font-size: 13px;
+  color: var(--t2);
+  font-family: 'DM Mono', monospace;
+}
+
+.hero-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 32px;
+  background: var(--cream);
+  color: var(--bg);
+  border: none;
+  border-radius: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background .2s, transform .2s;
+  cursor: pointer;
+}
+
+.hero-cta:hover {
+  background: var(--cream2);
+  transform: translateY(-2px);
+}
+
+/* STAT CARDS GRID */
+.stat-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  padding: 40px 48px;
+  background: var(--bg);
+}
+
+.scard {
+  background: var(--bg2);
+  border: 1px solid var(--wire);
+  border-radius: 14px;
+  padding: 28px;
+  position: relative;
+  overflow: hidden;
+  transition: all .2s ease;
+  cursor: default;
+}
+
+.scard:hover {
+  background: var(--bg3);
+  border-color: var(--wire2);
+}
+
+.scard-n {
+  font-family: 'Instrument Serif', serif;
+  font-size: 48px;
+  line-height: 1;
+  letter-spacing: -1px;
+  margin-bottom: 12px;
+  font-weight: 400;
+}
+
+.scard-l {
+  font-size: 14px;
+  color: var(--t1);
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.scard-s {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--t2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* MAIN CONTENT AREA */
+.body-split {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 20px;
+  padding: 40px 48px;
+  background: var(--bg);
+  min-height: calc(100vh - 60px - 200px);
+}
+
+/* LEFT SECTION */
+.body-left {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.sec-ttl {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--cream);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sec-ttl::before {
+  content: '—';
+  color: var(--cream);
+}
+
+.navgrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.qlink {
+  background: var(--bg2);
+  border: 1px solid var(--wire);
+  border-radius: 16px;
+  padding: 24px;
+  text-decoration: none;
+  color: var(--t0);
+  transition: all .2s ease;
+  display: flex;
+  flex-direction: column;
+  min-height: 180px;
+  position: relative;
+  overflow: hidden;
+}
+
+.qlink::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(240,230,210,0.02) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity .2s ease;
+  pointer-events: none;
+}
+
+.qlink:hover {
+  border-color: var(--wire2);
+  background: var(--bg3);
+  transform: translateY(-4px);
+}
+
+.qlink:hover::before {
+  opacity: 1;
+}
+
+.qlink.featured {
+  border-color: rgba(240,230,210,.2);
+  background: rgba(240,230,210,.03);
+}
+
+.qlink.featured:hover {
+  border-color: rgba(240,230,210,.3);
+  background: rgba(240,230,210,.06);
+}
+
+.ql-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  background: var(--bg4);
+  flex-shrink: 0;
+  transition: all .2s ease;
+}
+
+.qlink:hover .ql-icon {
+  background: var(--bg5);
+}
+
+.qlink.featured .ql-icon {
+  background: rgba(240,230,210,.12);
+}
+
+.ql-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.ql-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: -.2px;
+  margin-bottom: 8px;
+  color: var(--t0);
+}
+
+.ql-sub {
+  font-size: 13px;
+  color: var(--t2);
+  line-height: 1.6;
+  flex: 1;
+}
+
+.ql-arr {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--t3);
+  margin-top: 16px;
+  display: block;
+  transition: color .2s ease;
+  letter-spacing: .5px;
+}
+
+.qlink:hover .ql-arr {
+  color: var(--cream);
+}
+
+.qlink.featured .ql-arr {
+  color: var(--cream);
+}
+
+/* RIGHT SECTION */
+.body-right {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.act-block {
+  background: var(--bg2);
+  border: 1px solid var(--wire);
+  border-radius: 14px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 300px;
+}
+
+.act-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--wire);
+}
+
+.act-ttl {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--cream);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.act-link {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--t3);
+  text-decoration: none;
+  transition: color .2s ease;
+}
+
+.act-link:hover {
+  color: var(--cream);
+}
+
+.act-panel {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  overflow: hidden;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.ap-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--wire);
+  transition: all .2s ease;
+}
+
+.ap-row:last-child {
+  border-bottom: none;
+}
+
+.ap-row:hover {
+  background: rgba(255,255,255,.01);
+  padding-left: 8px;
+}
+
+.ap-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.ap-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ap-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--t0);
+}
+
+.ap-meta {
+  font-size: 12px;
+  color: var(--t2);
+  font-family: 'DM Mono', monospace;
+  margin-top: 2px;
+}
+
+.ap-val {
+  font-family: 'Instrument Serif', serif;
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--cream);
+  flex-shrink: 0;
+}
+
+/* RESPONSIVE */
+@media(max-width:1200px){
+  .hero {
+    flex-direction: column;
+    padding: 48px 36px;
+    gap: 32px;
+  }
+  
+  .hero-right {
+    align-items: flex-start;
+  }
+  
+  .hero-name {
+    font-size: 48px;
+  }
+  
+  .body-split {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  
+  .stat-strip {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+}
+
+@media(max-width:768px){
+  .hero {
+    padding: 36px 24px;
+    gap: 24px;
+  }
+  
+  .hero-name {
+    font-size: 36px;
+  }
+  
+  .hero-desc {
+    font-size: 14px;
+  }
+  
+  .hero-stats {
+    align-items: flex-start;
+  }
+  
+  .stat-strip {
+    grid-template-columns: 1fr;
+    padding: 24px;
+    gap: 12px;
+  }
+  
+  .scard {
+    padding: 20px;
+  }
+  
+  .scard-n {
+    font-size: 36px;
+  }
+  
+  .body-split {
+    padding: 24px;
+  }
+  
+  .navgrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .qlink {
+    min-height: 140px;
+    padding: 20px;
+  }
+  
+  .sec-ttl {
+    font-size: 11px;
+  }
+}
+
+@media(max-width:480px){
+  .hero {
+    padding: 24px 16px;
+    gap: 16px;
+  }
+  
+  .hero-name {
+    font-size: 28px;
+    margin-bottom: 16px;
+  }
+  
+  .hero-eyebrow {
+    font-size: 11px;
+    margin-bottom: 12px;
+  }
+  
+  .hero-desc {
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+  
+  .hero-date {
+    font-size: 12px;
+  }
+  
+  .hero-stat-val {
+    font-size: 24px;
+  }
+  
+  .hero-stat-label {
+    font-size: 11px;
+  }
+  
+  .hero-cta {
+    padding: 12px 20px;
+    font-size: 13px;
+  }
+  
+  .stat-strip {
+    grid-template-columns: 1fr;
+    padding: 16px;
+    gap: 12px;
+  }
+  
+  .scard {
+    padding: 16px;
+  }
+  
+  .scard-n {
+    font-size: 28px;
+  }
+  
+  .scard-l {
+    font-size: 13px;
+  }
+  
+  .scard-s {
+    font-size: 11px;
+  }
+  
+  .body-split {
+    padding: 16px;
+    gap: 16px;
+  }
+  
+  .qlink {
+    min-height: 130px;
+    padding: 16px;
+  }
+  
+  .ql-title {
+    font-size: 16px;
+  }
+  
+  .ql-sub {
+    font-size: 12px;
+  }
+  
+  .act-block {
+    padding: 16px;
+  }
+  
+  .ap-val {
+    font-size: 18px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="loader" id="loader">
+  <div class="loader-logo">Iron<em>Track</em></div>
+  <div class="loader-bar"></div>
+</div>
+
+<nav class="nav">
+  <a class="nav-logo" href="index.html" class="active">Iron<span>Track</span></a>
+    <div class="nav-links">
+    <a href="index.html" class="active">Главная</a>
+    <a href="workout.html">Тренировки</a>
+    <a href="nutrition.html">Питание</a>
+    <a href="progress.html">Прогресс</a>
+    <a href="stats.html">Статистика</a>
+    <a href="diary.html">Дневник</a>
+    <a href="ai.html">ИИ</a>
+  </div>
+  <div class="nav-right">
+    <span class="nav-user" id="nav-user"></span>
+    <a href="profile.html" style="width:44px;height:44px;border-radius:50%;background:var(--bg3);border:1px solid var(--wire2);display:flex;align-items:center;justify-content:center;text-decoration:none;font-family:'Instrument Serif',serif;font-size:14px;color:var(--cream);transition:border-color .15s" id="nav-avatar">?</a><button class="nav-logout" onclick="doLogout()">Выйти</button>
+    <a class="nav-cta" href="ai.html">✦ Анализ</a>
+  </div>
+  <button class="nav-hamburger" id="nav-hamburger" onclick="toggleNavMenu()">☰</button>
+</nav>
+
+<div class="pw" id="main" style="display:none">
+
+  <!-- HERO SECTION -->
+  <div class="hero">
+    <div class="hero-left">
+      <div class="hero-eyebrow">Добро пожаловать</div>
+      <div class="hero-name">Привет,<br><em id="uname">—</em></div>
+      <div class="hero-desc">Отслеживай свой прогресс, анализируй результаты и достигай новых высот в тренировках</div>
+      <a class="hero-cta" href="ai.html">✦ Получить анализ</a>
+    </div>
+    <div class="hero-right">
+      <div class="hero-date" id="today-date"></div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <span class="hero-stat-val" id="s-w-hero">—</span>
+          <span class="hero-stat-label">тренировок</span>
+        </div>
+        <div class="hero-stat">
+          <span class="hero-stat-val" id="s-p-hero">—</span>
+          <span class="hero-stat-label">рекордов</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STAT CARDS -->
+  <div class="stat-strip">
+    <div class="scard">
+      <div class="scard-n" id="s-w" style="color:var(--cream)">—</div>
+      <div class="scard-l">Дней тренировок</div>
+      <div class="scard-s" id="s-ws">загрузка...</div>
+    </div>
+    <div class="scard">
+      <div class="scard-n" id="s-n" style="color:var(--blue)">—</div>
+      <div class="scard-l">Блюд записано</div>
+      <div class="scard-s" id="s-ns">загрузка...</div>
+    </div>
+    <div class="scard">
+      <div class="scard-n" id="s-p" style="color:var(--green)">—</div>
+      <div class="scard-l">Показателей</div>
+      <div class="scard-s">рекорды + рабочие</div>
+    </div>
+    <div class="scard">
+      <div class="scard-n" id="s-b" style="color:var(--amber)">—</div>
+      <div class="scard-l">Лучший рекорд</div>
+      <div class="scard-s" id="s-bs">кг</div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="body-split">
+
+    <!-- LEFT: Navigation Cards -->
+    <div class="body-left">
+      <div class="sec-ttl">Разделы</div>
+      <div class="navgrid">
+
+        <a class="qlink" href="workout.html">
+          <div class="ql-icon">
+            <svg viewBox="0 0 16 16" fill="none" stroke="var(--t1)" stroke-width="1.6" stroke-linecap="round">
+              <path d="M2 8h12M4 5.5l-2 2.5 2 2.5M12 5.5l2 2.5-2 2.5"/>
+            </svg>
+          </div>
+          <div class="ql-title">Тренировки</div>
+          <div class="ql-sub">Программа по дням, упражнения, подходы и веса</div>
+          <span class="ql-arr">Открыть →</span>
+        </a>
+
+        <a class="qlink" href="nutrition.html">
+          <div class="ql-icon">
+            <svg viewBox="0 0 16 16" fill="none" stroke="var(--t1)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 2v5a3 3 0 006 0V2"/>
+              <line x1="8" y1="10" x2="8" y2="14"/>
+              <line x1="5" y1="14" x2="11" y2="14"/>
+            </svg>
+          </div>
+          <div class="ql-title">Питание</div>
+          <div class="ql-sub">Дневник еды, калории и параметры тела</div>
+          <span class="ql-arr">Открыть →</span>
+        </a>
+
+        <a class="qlink" href="progress.html">
+          <div class="ql-icon">
+            <svg viewBox="0 0 16 16" fill="none" stroke="var(--t1)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="2,12 6,7.5 9.5,9.5 14,4"/>
+              <polyline points="11,4 14,4 14,7"/>
+            </svg>
+          </div>
+          <div class="ql-title">Прогресс</div>
+          <div class="ql-sub">Рекорды, рабочие веса и динамика роста</div>
+          <span class="ql-arr">Открыть →</span>
+        </a>
+
+        <a class="qlink featured" href="ai.html">
+          <div class="ql-icon">
+            <svg viewBox="0 0 16 16" fill="none" stroke="var(--cream)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 2l1.4 4H14l-3.6 2.6 1.4 4.4L8 10.5l-3.8 2.5 1.4-4.4L2 6h4.6z"/>
+            </svg>
+          </div>
+          <div class="ql-title">ИИ-Анализ</div>
+          <div class="ql-sub">Персональные рекомендации на основе твоих данных</div>
+          <span class="ql-arr">Запустить →</span>
+        </a>
+
+      </div>
+    </div>
+
+    <!-- RIGHT: Activity Panels -->
+    <div class="body-right">
+      <div class="act-block">
+        <div class="act-head">
+          <span class="act-ttl">Последние тренировки</span>
+          <a class="act-link" href="workout.html">все →</a>
+        </div>
+        <div class="act-panel" id="w-preview"></div>
+      </div>
+      <div class="act-block">
+        <div class="act-head">
+          <span class="act-ttl">Топ рекорды</span>
+          <a class="act-link" href="progress.html">все →</a>
+        </div>
+        <div class="act-panel" id="p-preview"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="_supabase.js"></script>
+<script>
+requireAuth();
+const user = getUser();
+document.getElementById('nav-user').textContent = user?.email||'';
+const raw = (user?.email||'Атлет').split('@')[0];
+document.getElementById('uname').textContent = raw.length > 22 ? raw.slice(0,20)+'…' : raw;
+document.getElementById('today-date').textContent =
+  new Date().toLocaleDateString('ru',{weekday:'long',day:'numeric',month:'long'});
+
+async function doLogout(){ await signOut(); window.location.href='login.html'; }
+
+const DM = {mon:'Пн',tue:'Вт',wed:'Ср',thu:'Чт',fri:'Пт',sat:'Сб',sun:'Вс'};
+const DF = {mon:'Понедельник',tue:'Вторник',wed:'Среда',thu:'Четверг',fri:'Пятница',sat:'Суббота',sun:'Воскресенье'};
+
+async function load(){
+  try{
+    const [wR,nR,pR] = await Promise.all([
+      dbGet('workouts',`user_id=eq.${user.id}`),
+      dbGet('nutrition',`user_id=eq.${user.id}`),
+      dbGet('progress',`user_id=eq.${user.id}&limit=1`)
+    ]);
+
+    const fw = (wR||[]).filter(r=>r.exercises?.length>0);
+    document.getElementById('s-w').textContent = fw.length;
+    document.getElementById('s-w-hero').textContent = fw.length;
+    document.getElementById('s-ws').textContent = fw.length ? fw.map(r=>DM[r.day]||r.day).join(' · ') : 'пусто';
+
+    const fn = (nR||[]).filter(r=>r.meals?.some(m=>m.name));
+    document.getElementById('s-n').textContent = fn.reduce((s,r)=>s+(r.meals||[]).filter(m=>m.name).length,0);
+    document.getElementById('s-ns').textContent = fn.length ? fn.length+' дней' : 'пусто';
+
+    const prs = pR&&pR[0] ? pR[0].records||[] : [];
+    document.getElementById('s-p').textContent = prs.length;
+    document.getElementById('s-p-hero').textContent = prs.length;
+    const best = prs.filter(r=>r.type==='record').sort((a,b)=>b.weight-a.weight)[0];
+    document.getElementById('s-b').textContent = best ? best.weight : '—';
+    document.getElementById('s-bs').textContent = best ? best.exercise : 'нет рекордов';
+
+    document.getElementById('w-preview').innerHTML = fw.length
+      ? fw.slice(0,4).map(r=>`
+        <div class="ap-row">
+          <div class="ap-left">
+            <div class="ap-dot" style="background:var(--cream)"></div>
+            <div>
+              <div class="ap-name">${DF[r.day]||r.day}</div>
+              <div class="ap-meta">${r.exercises.length} упражнений</div>
+            </div>
+          </div>
+          <div class="ap-val">${r.exercises.length}</div>
+        </div>`).join('')
+      : '<div class="empty-state" style="border:none;padding:28px"><p>Тренировки не заполнены</p></div>';
+
+    document.getElementById('p-preview').innerHTML = prs.length
+      ? prs.slice(0,4).map(r=>{
+          const prev = r.history?.length>=2 ? r.history[r.history.length-2].weight : null;
+          const diff = prev ? r.weight-prev : 0;
+          return `
+          <div class="ap-row">
+            <div class="ap-left">
+              <div class="ap-dot" style="background:${r.type==='record'?'var(--cream)':'var(--blue)'}"></div>
+              <div>
+                <div class="ap-name">${r.exercise}</div>
+                <div class="ap-meta">${r.type==='record'?'рекорд':'рабочий вес'}</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="ap-val">${r.weight}</span>
+              ${diff>0?`<span style="font-size:11px;color:var(--green);font-family:'DM Mono',monospace">+${diff}</span>`:''}
+            </div>
+          </div>`;
+        }).join('')
+      : '<div class="empty-state" style="border:none;padding:28px"><p>Нет показателей</p></div>';
+
+  } catch(e){ console.error(e); }
+  finally{
+    document.getElementById('loader').style.display='none';
+    document.getElementById('main').style.display='block';
+  }
+}
+load();
+</script>
+<script>
+function toggleNavMenu(){
+  var links = document.querySelector('.nav-links');
+  if(!links) return;
+  links.classList.toggle('mobile-open');
+}
+
+(function(){
+  function navigate(url){
+    document.body.classList.add('leaving');
+    setTimeout(function(){ window.location.href = url; }, 180);
+  }
+  document.addEventListener('click', function(e){
+    var a = e.target.closest('a');
+    if(!a) return;
+    var href = a.getAttribute('href');
+    if(!href || href.charAt(0)==='#' || href.startsWith('http') || href.startsWith('mailto') || a.target==='_blank') return;
+    e.preventDefault();
+    navigate(href);
+  });
+})();
+</script>
+
+</body>
+</html>

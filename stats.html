@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Статистика — IronTrack</title>
+<link rel="stylesheet" href="_style.css"/>
+<style>
+body { overflow-x: hidden; }
+.pw { padding: 0; max-width: 100%; }
+.split { display: flex; min-height: 100vh; }
+
+/* SIDEBAR */
+.sidebar {
+  position: fixed; top: 60px; left: 0; bottom: 0; width: 260px;
+  background: var(--bg2); border-right: 1px solid var(--wire);
+  display: flex; flex-direction: column; z-index: 100;
+}
+.sb-header { padding: 24px 22px 16px; border-bottom: 1px solid var(--wire); }
+.sb-title { font-family: 'Instrument Serif', serif; font-size: 26px; font-weight: 400; color: var(--t0); margin-bottom: 3px; }
+.sb-sub { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--t2); letter-spacing: 2px; text-transform: uppercase; }
+.sb-nav { flex: 1; padding: 8px 0; }
+.sbn {
+  width: 100%; padding: 12px 22px; background: transparent; border: none;
+  display: flex; align-items: center; gap: 11px;
+  cursor: pointer; color: var(--t2); font-family: 'DM Sans', sans-serif; font-size: 14px;
+  text-align: left; transition: background .15s, color .15s; position: relative;
+}
+.sbn:hover { background: var(--bg3); color: var(--t0); }
+.sbn.active { background: var(--bg3); color: var(--cream); font-weight: 500; }
+.sbn.active::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; background: var(--cream); border-radius: 0 2px 2px 0; }
+.sbn svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+/* CONTENT */
+.content { margin-left: 260px; padding: 52px 52px 72px; flex: 1; }
+.section { display: none; }
+.section.active { display: block; }
+
+/* SECTION HEADER */
+.sec-hd { margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--wire); display: flex; align-items: flex-end; justify-content: space-between; }
+.sec-left .sec-eyebrow { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--t2); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+.sec-title { font-family: 'Instrument Serif', serif; font-size: 44px; font-weight: 400; letter-spacing: -.5px; line-height: .95; }
+
+/* KPI ROW */
+.kpi-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 28px; }
+.kpi {
+  background: var(--bg2); border: 1px solid var(--wire); border-radius: 14px;
+  padding: 22px 20px; position: relative; overflow: hidden;
+}
+.kpi::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; opacity: 0; transition: opacity .2s; }
+.kpi:hover::before { opacity: .6; }
+.kpi.c1::before { background: linear-gradient(90deg,transparent,var(--cream),transparent); }
+.kpi.c2::before { background: linear-gradient(90deg,transparent,var(--green),transparent); }
+.kpi.c3::before { background: linear-gradient(90deg,transparent,var(--blue),transparent); }
+.kpi.c4::before { background: linear-gradient(90deg,transparent,var(--amber),transparent); }
+.kpi-n { font-family: 'Instrument Serif', serif; font-size: 44px; line-height: 1; letter-spacing: -1px; margin-bottom: 6px; }
+.kpi-l { font-size: 13px; color: var(--t1); font-weight: 500; }
+.kpi-s { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--t2); margin-top: 4px; }
+
+/* CHARTS */
+.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.chart-card { background: var(--bg2); border: 1px solid var(--wire); border-radius: 14px; padding: 22px 24px; }
+.chart-card.wide { grid-column: 1/-1; }
+.chart-ttl { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--t1); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 18px; font-weight: 500; }
+
+/* BAR CHART */
+.bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 120px; }
+.bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.bar { width: 100%; border-radius: 4px 4px 0 0; background: var(--cream-a); border: 1px solid rgba(232,220,200,.15); transition: all .3s; min-height: 2px; position: relative; cursor: pointer; }
+.bar:hover { background: rgba(232,220,200,.2); }
+.bar-lbl { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--t2); text-transform: uppercase; }
+.bar-val { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--t3); }
+
+/* LINE CHART (SVG) */
+.line-chart-wrap { position: relative; height: 140px; }
+.line-chart-wrap svg { width: 100%; height: 100%; }
+
+/* EXERCISE LIST */
+.ex-list { display: flex; flex-direction: column; gap: 6px; }
+.ex-row { display: flex; align-items: center; gap: 12px; }
+.ex-name { font-size: 13px; color: var(--t0); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ex-bar-wrap { width: 120px; height: 4px; background: var(--bg4); border-radius: 2px; overflow: hidden; }
+.ex-bar-fill { height: 100%; background: var(--cream); border-radius: 2px; }
+.ex-cnt { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--t2); min-width: 40px; text-align: right; }
+
+/* HEATMAP */
+.heatmap { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
+.hm-cell {
+  aspect-ratio: 1; border-radius: 3px; background: var(--bg3);
+  transition: background .2s; cursor: default; position: relative;
+}
+.hm-cell.has-1 { background: rgba(232,220,200,.15); }
+.hm-cell.has-2 { background: rgba(232,220,200,.3); }
+.hm-cell.has-3 { background: rgba(232,220,200,.5); }
+.hm-cell.has-4 { background: rgba(232,220,200,.75); }
+.hm-cell.has-5 { background: var(--cream); }
+.hm-days { display: flex; gap: 4px; margin-bottom: 6px; }
+.hm-day { flex: 1; font-family: 'DM Mono', monospace; font-size: 9px; color: var(--t3); text-align: center; text-transform: uppercase; }
+.hm-legend { display: flex; align-items: center; gap: 6px; margin-top: 10px; justify-content: flex-end; }
+.hm-leg-lbl { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--t3); }
+.hm-leg-cell { width: 12px; height: 12px; border-radius: 2px; }
+
+/* RECORDS TABLE */
+.rec-table { width: 100%; border-collapse: collapse; }
+.rec-table th { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--t1); text-transform: uppercase; letter-spacing: 1px; padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--wire); font-weight: 500; }
+.rec-table td { padding: 11px 12px; border-bottom: 1px solid var(--wire); font-size: 13px; color: var(--t0); }
+.rec-table tr:last-child td { border-bottom: none; }
+.rec-table tr:hover td { background: rgba(255,255,255,.015); }
+.rec-weight { font-family: 'Instrument Serif', serif; font-size: 22px; color: var(--cream); }
+.rec-diff { font-family: 'DM Mono', monospace; font-size: 11px; }
+.rec-diff.up { color: var(--green); }
+
+@media(max-width:860px){
+  .sidebar { position: static; width: 100%; height: auto; top: auto; }
+  .sb-nav { display: flex; overflow-x: auto; flex-direction: row; padding: 0; }
+  .sbn { flex-direction: column; align-items: center; padding: 10px 14px; min-width: 70px; gap: 4px; font-size: 12px; border-right: 1px solid var(--wire); min-height: 44px; }
+  .sbn.active::before { top: 0; left: 4px; right: 4px; bottom: auto; width: auto; height: 2px; }
+  .content { margin-left: 0; padding: 24px 20px; }
+  .kpi-row { grid-template-columns: repeat(2,1fr); }
+  .charts-grid { grid-template-columns: 1fr; }
+  .sec-title { font-size: 32px; }
+}
+
+@media(max-width:480px){
+  .sidebar { padding: 0; }
+  .sb-header { padding: 16px 16px 12px; }
+  .sb-title { font-size: 20px; }
+  .sb-nav { padding: 0; }
+  .sbn { padding: 10px 12px; min-width: 60px; font-size: 11px; }
+  .content { padding: 20px 12px; }
+  .sec-hd { margin-bottom: 20px; padding-bottom: 16px; flex-direction: column; align-items: flex-start; }
+  .sec-title { font-size: 24px; }
+  .sec-eyebrow { font-size: 9px; margin-bottom: 6px; }
+  .kpi-row { grid-template-columns: 1fr; gap: 10px; }
+  .kpi { padding: 16px 14px; border-radius: 12px; }
+  .kpi-n { font-size: 32px; margin-bottom: 4px; }
+  .kpi-l { font-size: 12px; }
+  .kpi-s { font-size: 9px; margin-top: 3px; }
+  .charts-grid { gap: 12px; }
+  .chart-card { padding: 16px 14px; border-radius: 12px; }
+  .chart-ttl { font-size: 10px; margin-bottom: 14px; }
+  .bar-chart { height: 100px; gap: 4px; }
+  .bar-lbl { font-size: 8px; }
+  .bar-val { font-size: 8px; }
+  .line-chart-wrap { height: 100px; }
+  .ex-list { gap: 4px; }
+  .ex-row { gap: 10px; }
+  .ex-name { font-size: 12px; }
+  .ex-bar-wrap { width: 80px; }
+  .ex-cnt { font-size: 10px; }
+  .heatmap { gap: 3px; }
+  .hm-cell { border-radius: 2px; }
+  .hm-day { font-size: 8px; }
+  .hm-leg-lbl { font-size: 8px; }
+  .hm-leg-cell { width: 10px; height: 10px; }
+  .rec-table { font-size: 12px; }
+  .rec-table th { font-size: 9px; padding: 8px 10px; }
+  .rec-table td { padding: 10px 10px; font-size: 12px; }
+  .rec-weight { font-size: 18px; }
+}
+</style>
+</head>
+<body>
+<div class="loader" id="loader">
+  <div class="loader-logo">Iron<em>Track</em></div>
+  <div class="loader-bar" aria-hidden="true"></div>
+</div>
+
+<nav class="nav">
+  <a class="nav-logo" href="index.html">Iron<span>Track</span></a>
+    <div class="nav-links">
+    <a href="index.html">Главная</a>
+    <a href="workout.html">Тренировки</a>
+    <a href="nutrition.html">Питание</a>
+    <a href="progress.html">Прогресс</a>
+    <a href="stats.html" class="active">Статистика</a>
+    <a href="diary.html">Дневник</a>
+    <a href="ai.html">ИИ</a>
+  </div>
+  <div class="nav-right">
+    <a href="profile.html" style="width:44px;height:44px;border-radius:50%;background:var(--bg3);border:1px solid var(--wire2);display:flex;align-items:center;justify-content:center;text-decoration:none;font-family:'Instrument Serif',serif;font-size:14px;color:var(--cream);transition:border-color .15s" id="nav-avatar">?</a><button class="nav-logout" onclick="doLogout()">Выйти</button>
+    <a class="nav-cta" href="ai.html">✦ Анализ</a>
+  </div>
+  <button class="nav-hamburger" id="nav-hamburger" onclick="toggleNavMenu()">☰</button>
+</nav>
+
+<div class="pw">
+  <div class="split">
+    <aside class="sidebar">
+      <div class="sb-header">
+        <div class="sb-title">Статистика</div>
+        <div class="sb-sub">Анализ данных</div>
+      </div>
+      <div class="sb-nav">
+        <button class="sbn active" onclick="showTab('overview',this)">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+          Обзор
+        </button>
+        <button class="sbn" onclick="showTab('workouts',this)">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 8h12M4 5.5l-2 2.5 2 2.5M12 5.5l2 2.5-2 2.5"/></svg>
+          Тренировки
+        </button>
+        <button class="sbn" onclick="showTab('records',this)">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,12 6,7.5 9.5,9.5 14,4"/><polyline points="11,4 14,4 14,7"/></svg>
+          Рекорды
+        </button>
+        <button class="sbn" onclick="showTab('nutrition',this)">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2v5a3 3 0 006 0V2"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="5" y1="14" x2="11" y2="14"/></svg>
+          Питание
+        </button>
+      </div>
+    </aside>
+
+    <div class="content" id="main-content" style="opacity:0;transition:opacity .2s ease">
+
+      <!-- OVERVIEW -->
+      <div class="section active" id="tab-overview">
+        <div class="sec-hd">
+          <div class="sec-left">
+            <div class="sec-eyebrow">Статистика</div>
+            <div class="sec-title">Обзор</div>
+          </div>
+        </div>
+        <div class="kpi-row">
+          <div class="kpi c1"><div class="kpi-n" id="ov-days" style="color:var(--cream)">—</div><div class="kpi-l">Дней тренировок</div><div class="kpi-s" id="ov-days-s">загрузка...</div></div>
+          <div class="kpi c2"><div class="kpi-n" id="ov-vol" style="color:var(--green)">—</div><div class="kpi-l">Упражнений всего</div><div class="kpi-s" id="ov-vol-s">за всё время</div></div>
+          <div class="kpi c3"><div class="kpi-n" id="ov-rec" style="color:var(--blue)">—</div><div class="kpi-l">Рекордов</div><div class="kpi-s" id="ov-rec-s">личные максимумы</div></div>
+          <div class="kpi c4"><div class="kpi-n" id="ov-streak" style="color:var(--amber)">—</div><div class="kpi-l">Лучший рекорд</div><div class="kpi-s" id="ov-streak-s">кг</div></div>
+        </div>
+        <div class="charts-grid">
+          <div class="chart-card wide">
+            <div class="chart-ttl">Активность по дням недели</div>
+            <div class="bar-chart" id="weekday-chart"></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-ttl">Топ упражнений</div>
+            <div class="ex-list" id="top-ex"></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-ttl">Тепловая карта недели</div>
+            <div class="hm-days"><span class="hm-day">пн</span><span class="hm-day">вт</span><span class="hm-day">ср</span><span class="hm-day">чт</span><span class="hm-day">пт</span><span class="hm-day">сб</span><span class="hm-day">вс</span></div>
+            <div class="heatmap" id="heatmap"></div>
+            <div class="hm-legend">
+              <span class="hm-leg-lbl">меньше</span>
+              <div class="hm-leg-cell" style="background:var(--bg3)"></div>
+              <div class="hm-leg-cell" style="background:rgba(232,220,200,.15)"></div>
+              <div class="hm-leg-cell" style="background:rgba(232,220,200,.35)"></div>
+              <div class="hm-leg-cell" style="background:rgba(232,220,200,.6)"></div>
+              <div class="hm-leg-cell" style="background:var(--cream)"></div>
+              <span class="hm-leg-lbl">больше</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WORKOUTS -->
+      <div class="section" id="tab-workouts">
+        <div class="sec-hd">
+          <div class="sec-left">
+            <div class="sec-eyebrow">Статистика</div>
+            <div class="sec-title">Тренировки</div>
+          </div>
+        </div>
+        <div class="kpi-row">
+          <div class="kpi c1"><div class="kpi-n" id="w-days" style="color:var(--cream)">—</div><div class="kpi-l">Дней в неделе</div></div>
+          <div class="kpi c2"><div class="kpi-n" id="w-ex-avg" style="color:var(--green)">—</div><div class="kpi-l">Упр. в среднем</div><div class="kpi-s">за тренировку</div></div>
+          <div class="kpi c3"><div class="kpi-n" id="w-sets" style="color:var(--blue)">—</div><div class="kpi-l">Подходов всего</div></div>
+          <div class="kpi c4"><div class="kpi-n" id="w-reps" style="color:var(--amber)">—</div><div class="kpi-l">Повторений всего</div></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-ttl">Упражнения по группам мышц</div>
+          <div id="muscle-chart" class="ex-list"></div>
+        </div>
+      </div>
+
+      <!-- RECORDS -->
+      <div class="section" id="tab-records">
+        <div class="sec-hd">
+          <div class="sec-left">
+            <div class="sec-eyebrow">Статистика</div>
+            <div class="sec-title">Рекорды</div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-ttl">Все рекорды</div>
+          <table class="rec-table" id="rec-table">
+            <thead><tr><th>Упражнение</th><th>Тип</th><th>Вес</th><th>Повторы</th><th>Прогресс</th><th>Записей</th></tr></thead>
+            <tbody id="rec-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- NUTRITION -->
+      <div class="section" id="tab-nutrition">
+        <div class="sec-hd">
+          <div class="sec-left">
+            <div class="sec-eyebrow">Статистика</div>
+            <div class="sec-title">Питание</div>
+          </div>
+        </div>
+        <div class="kpi-row">
+          <div class="kpi c1"><div class="kpi-n" id="n-days" style="color:var(--cream)">—</div><div class="kpi-l">Дней записано</div></div>
+          <div class="kpi c2"><div class="kpi-n" id="n-meals" style="color:var(--green)">—</div><div class="kpi-l">Блюд всего</div></div>
+          <div class="kpi c3"><div class="kpi-n" id="n-avg-kcal" style="color:var(--blue)">—</div><div class="kpi-l">Ккал в среднем</div><div class="kpi-s">в день</div></div>
+          <div class="kpi c4"><div class="kpi-n" id="n-max-kcal" style="color:var(--amber)">—</div><div class="kpi-l">Максимум ккал</div><div class="kpi-s">за день</div></div>
+        </div>
+        <div class="chart-card wide">
+          <div class="chart-ttl">Калории по дням</div>
+          <div class="bar-chart" id="kcal-chart"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="_supabase.js"></script>
+<script>
+requireAuth(); const user = getUser();
+async function doLogout(){ await signOut(); window.location.href='login.html'; }
+
+const DAYS_RU = {mon:'Пн',tue:'Вт',wed:'Ср',thu:'Чт',fri:'Пт',sat:'Сб',sun:'Вс'};
+const DAYS_ORDER = ['mon','tue','wed','thu','fri','sat','sun'];
+let allW=[], allN=[], allP=[];
+
+async function init(){
+  try{
+    const [wR,nR,pR] = await Promise.all([
+      dbGet('workouts',`user_id=eq.${user.id}`),
+      dbGet('nutrition',`user_id=eq.${user.id}`),
+      dbGet('progress',`user_id=eq.${user.id}&limit=1`)
+    ]);
+    allW = (wR||[]).filter(r=>r.exercises?.length);
+    allN = (nR||[]).filter(r=>r.meals?.some(m=>m.name));
+    allP = pR&&pR[0]?pR[0].records||[]:[];
+  }catch(e){console.error(e);}
+  renderOverview();
+  document.getElementById('main-content').style.opacity='1';
+}
+
+function showTab(id,btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.sbn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='overview') renderOverview();
+  if(id==='workouts') renderWorkouts();
+  if(id==='records') renderRecords();
+  if(id==='nutrition') renderNutrition();
+}
+
+function renderOverview(){
+  const totalEx = allW.reduce((s,r)=>s+r.exercises.length,0);
+  const bestRec = allP.filter(r=>r.type==='record').sort((a,b)=>b.weight-a.weight)[0];
+  document.getElementById('ov-days').textContent = allW.length;
+  document.getElementById('ov-days-s').textContent = 'из 7 дней в неделе';
+  document.getElementById('ov-vol').textContent = totalEx;
+  document.getElementById('ov-rec').textContent = allP.filter(r=>r.type==='record').length;
+  document.getElementById('ov-streak').textContent = bestRec?bestRec.weight:'—';
+  document.getElementById('ov-streak-s').textContent = bestRec?bestRec.exercise:'нет рекордов';
+
+  // weekday bar chart
+  const dayCounts = {};
+  DAYS_ORDER.forEach(d=>dayCounts[d]=0);
+  allW.forEach(r=>{ if(dayCounts[r.day]!==undefined) dayCounts[r.day]=r.exercises.length; });
+  const maxC = Math.max(...Object.values(dayCounts),1);
+  document.getElementById('weekday-chart').innerHTML = DAYS_ORDER.map(d=>{
+    const pct = Math.round(dayCounts[d]/maxC*100);
+    return `<div class="bar-col">
+      <div class="bar-val">${dayCounts[d]||''}</div>
+      <div class="bar" style="height:${Math.max(pct,3)}%"></div>
+      <div class="bar-lbl">${DAYS_RU[d]}</div>
+    </div>`;
+  }).join('');
+
+  // top exercises
+  const exCount={};
+  allW.forEach(r=>r.exercises.forEach(e=>{exCount[e.name]=(exCount[e.name]||0)+1;}));
+  const sorted=Object.entries(exCount).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const maxE = sorted[0]?.[1]||1;
+  document.getElementById('top-ex').innerHTML = sorted.length
+    ? sorted.map(([n,c])=>`<div class="ex-row"><span class="ex-name">${n}</span><div class="ex-bar-wrap"><div class="ex-bar-fill" style="width:${Math.round(c/maxE*100)}%"></div></div><span class="ex-cnt">${c}д</span></div>`).join('')
+    : '<div style="color:var(--t3);font-family:\'DM Mono\',monospace;font-size:12px">нет данных</div>';
+
+  // heatmap (7 cells = days of week, fill by exercise count)
+  document.getElementById('heatmap').innerHTML = DAYS_ORDER.map(d=>{
+    const c = dayCounts[d];
+    const cls = c>=5?'has-5':c>=4?'has-4':c>=3?'has-3':c>=2?'has-2':c>=1?'has-1':'';
+    return `<div class="hm-cell ${cls}" title="${DAYS_RU[d]}: ${c} упр."></div>`;
+  }).join('');
+}
+
+function renderWorkouts(){
+  const totalEx = allW.reduce((s,r)=>s+r.exercises.length,0);
+  const avgEx = allW.length?Math.round(totalEx/allW.length):0;
+  const totalSets = allW.reduce((s,r)=>s+r.exercises.reduce((ss,e)=>ss+(+e.sets||0),0),0);
+  const totalReps = allW.reduce((s,r)=>s+r.exercises.reduce((ss,e)=>ss+((+e.sets||0)*(+e.reps||0)),0),0);
+  document.getElementById('w-days').textContent = allW.length;
+  document.getElementById('w-ex-avg').textContent = avgEx;
+  document.getElementById('w-sets').textContent = totalSets;
+  document.getElementById('w-reps').textContent = totalReps;
+
+  // muscle groups (by keyword matching)
+  const groups = {'Грудь':['Жим лёжа','Жим гантелей','Разводка','Кроссовер','Жим под углом'],'Ноги':['Приседания','Жим ногами','Выпады','Болгарские','Румынская'],'Спина':['Тяга','Подтягивания','Гиперэкстензия'],'Плечи':['Жим стоя','Разведение','Арнольда'],'Бицепс':['Сгибания','Молотки'],'Трицепс':['Французский','Разгибания','Брусьях'],'Пресс':['Подъём ног','Планка','Скручивания']};
+  const gcnt={};
+  allW.forEach(r=>r.exercises.forEach(e=>{
+    for(const[g,keys] of Object.entries(groups)){
+      if(keys.some(k=>e.name.includes(k))){ gcnt[g]=(gcnt[g]||0)+1; break; }
+    }
+  }));
+  const gmax=Math.max(...Object.values(gcnt),1);
+  document.getElementById('muscle-chart').innerHTML=Object.entries(gcnt).sort((a,b)=>b[1]-a[1])
+    .map(([n,c])=>`<div class="ex-row"><span class="ex-name">${n}</span><div class="ex-bar-wrap"><div class="ex-bar-fill" style="width:${Math.round(c/gmax*100)}%"></div></div><span class="ex-cnt">${c}</span></div>`).join('');
+}
+
+function renderRecords(){
+  const sorted=[...allP].sort((a,b)=>b.weight-a.weight);
+  document.getElementById('rec-tbody').innerHTML=sorted.length
+    ? sorted.map(r=>{
+        const prev=r.history?.length>=2?r.history[r.history.length-2].weight:null;
+        const diff=prev?r.weight-prev:0;
+        return `<tr>
+          <td>${r.exercise}</td>
+          <td><span class="tag ${r.type==='record'?'tag-lime':'tag-blue'}">${r.type==='record'?'рекорд':'рабочий'}</span></td>
+          <td><span class="rec-weight">${r.weight}</span> <span style="font-size:12px;color:var(--t2)">кг</span></td>
+          <td style="color:var(--t1)">${r.reps||'—'}</td>
+          <td><span class="rec-diff ${diff>0?'up':''}">${diff>0?'+'+diff+' кг':'—'}</span></td>
+          <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--t2)">${r.history?.length||1}</td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="6" style="color:var(--t3);font-family:\'DM Mono\',monospace;font-size:12px;text-align:center;padding:24px">нет данных</td></tr>';
+}
+
+function renderNutrition(){
+  const totalMeals=allN.reduce((s,r)=>s+(r.meals||[]).filter(m=>m.name).length,0);
+  const kcalPerDay=allN.map(r=>r.meals.reduce((s,m)=>s+(+m.kcal||0),0)).filter(k=>k>0);
+  const avgKcal=kcalPerDay.length?Math.round(kcalPerDay.reduce((a,b)=>a+b,0)/kcalPerDay.length):0;
+  const maxKcal=kcalPerDay.length?Math.max(...kcalPerDay):0;
+  document.getElementById('n-days').textContent=allN.length;
+  document.getElementById('n-meals').textContent=totalMeals;
+  document.getElementById('n-avg-kcal').textContent=avgKcal||'—';
+  document.getElementById('n-max-kcal').textContent=maxKcal||'—';
+
+  // kcal bar chart
+  const maxK=maxKcal||1;
+  const DAYS_NAMES=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+  const DAYS_KEYS=['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'];
+  document.getElementById('kcal-chart').innerHTML=DAYS_KEYS.map((day,i)=>{
+    const row=allN.find(r=>r.day===day);
+    const k=row?row.meals.reduce((s,m)=>s+(+m.kcal||0),0):0;
+    const pct=Math.round(k/maxK*100);
+    return `<div class="bar-col">
+      <div class="bar-val">${k||''}</div>
+      <div class="bar" style="height:${Math.max(pct,3)}%;${k?'background:rgba(232,220,200,.25);border-color:rgba(232,220,200,.2)':''}"></div>
+      <div class="bar-lbl">${DAYS_NAMES[i]}</div>
+    </div>`;
+  }).join('');
+}
+
+init();
+</script>
+<script>
+function toggleNavMenu(){
+  var links = document.querySelector('.nav-links');
+  if(!links) return;
+  links.classList.toggle('mobile-open');
+}
+
+(function(){
+  function navigate(url){ document.body.classList.add('leaving'); setTimeout(function(){ window.location.href=url; },180); }
+  document.addEventListener('click',function(e){
+    var a=e.target.closest('a'); if(!a) return;
+    var href=a.getAttribute('href');
+    if(!href||href.charAt(0)==='#'||href.startsWith('http')||href.startsWith('mailto')||a.target==='_blank') return;
+    e.preventDefault(); navigate(href);
+  });
+})();
+</script>
+</body>
+</html>

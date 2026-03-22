@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Прогресс — IronTrack</title>
+<link rel="stylesheet" href="_style.css"/>
+<style>
+body { overflow-x: hidden; }
+.pw { padding: 0; max-width: 100%; }
+
+/* SPLIT */
+.split { display: flex; min-height: 100vh; }
+
+/* SIDEBAR */
+.sidebar {
+  position: fixed; top: 60px; left: 0; bottom: 0; width: 260px;
+  background: var(--bg2); border-right: 1px solid var(--wire);
+  display: flex; flex-direction: column; z-index: 100; overflow-y: auto;
+}
+.sb-header { padding: 24px 22px 16px; border-bottom: 1px solid var(--wire); }
+.sb-title { font-family: 'Instrument Serif', serif; font-size: 26px; font-weight: 400; color: var(--t0); margin-bottom: 3px; }
+.sb-sub { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--t2); letter-spacing: 2px; text-transform: uppercase; }
+
+/* ADD FORM IN SIDEBAR */
+.sb-form { padding: 16px 22px; border-bottom: 1px solid var(--wire); }
+.sb-form-ttl { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--t1); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px; }
+.sb-field { margin-bottom: 10px; }
+.sb-field label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--t1); letter-spacing: 1.5px; text-transform: uppercase; display: block; margin-bottom: 5px; }
+.sb-field select, .sb-field input { font-size: 13px; padding: 8px 10px; }
+.sb-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+
+/* FILTER IN SIDEBAR */
+.sb-filter { padding: 14px 22px; border-bottom: 1px solid var(--wire); }
+.sb-filter-ttl { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--t1); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
+.filter-btns { display: flex; flex-direction: column; gap: 4px; }
+.fb {
+  width: 100%; padding: 9px 12px; border-radius: 8px;
+  font-size: 13px; font-weight: 500; text-align: left;
+  background: transparent; border: 1px solid transparent;
+  color: var(--t2); cursor: pointer;
+  font-family: 'DM Sans', sans-serif; transition: all .15s;
+  display: flex; align-items: center; gap: 8px;
+}
+.fb:hover { background: var(--bg3); color: var(--t0); }
+.fb.active { background: var(--bg3); color: var(--cream); border-color: rgba(232,220,200,.12); }
+.fb-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--bg5); flex-shrink: 0; }
+.fb.active .fb-dot { background: var(--cream); }
+
+/* CONTENT */
+.content { margin-left: 260px; padding: 48px 44px 60px; flex: 1; }
+
+/* PAGE HEADER */
+.page-hd {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  margin-bottom: 32px; flex-wrap: wrap; gap: 12px;
+  padding-bottom: 28px; border-bottom: 1px solid var(--wire);
+}
+.page-eyebrow { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--t3); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+.page-title { font-family: 'Instrument Serif', serif; font-size: 48px; font-weight: 400; letter-spacing: -.5px; line-height: .95; color: var(--t0); }
+.page-count { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--t2); }
+
+/* PROGRESS GRID */
+.pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+
+/* CARD */
+.pcard {
+  background: var(--bg2); border: 1px solid var(--wire);
+  border-radius: 16px; overflow: hidden;
+  transition: border-color .2s, transform .2s;
+  display: flex; flex-direction: column;
+}
+.pcard:hover { border-color: var(--wire2); transform: translateY(-3px); }
+
+.pc-top {
+  padding: 18px 20px 14px; border-bottom: 1px solid var(--wire);
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+}
+.pc-name {
+  font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600;
+  color: var(--t0); line-height: 1.3;
+}
+
+.pc-mid { padding: 16px 20px 12px; display: flex; align-items: flex-end; justify-content: space-between; }
+.pc-weight-wrap {}
+.pc-w {
+  font-family: 'Instrument Serif', serif;
+  font-size: 52px; line-height: 1; letter-spacing: -2px; color: var(--t0);
+  display: flex; align-items: baseline; gap: 4px;
+}
+.pc-w span { font-size: 18px; font-family: 'DM Sans', sans-serif; color: var(--t2); font-weight: 400; }
+.pc-reps { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--t3); margin-top: 4px; letter-spacing: 1px; }
+
+.pc-diff {
+  padding: 5px 10px; border-radius: 6px;
+  font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500;
+  flex-shrink: 0; align-self: flex-start; margin-top: 6px;
+}
+.pc-diff.up { background: rgba(109,191,138,.08); color: var(--green); border: 1px solid rgba(109,191,138,.18); }
+.pc-diff.same { background: var(--bg3); color: var(--t3); border: 1px solid var(--wire); }
+
+.pc-bot { padding: 0 20px 14px; }
+.pcbar { background: var(--bg4); height: 2px; border-radius: 2px; overflow: hidden; margin-bottom: 7px; }
+.pcbarf { height: 100%; border-radius: 2px; background: var(--cream); transition: width .6s; }
+.pcmeta { display: flex; justify-content: space-between; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--t2); }
+
+.pcact { padding: 0 20px 16px; display: flex; gap: 7px; margin-top: auto; }
+.histbtn {
+  flex: 1; padding: 8px 12px;
+  background: var(--bg3); border: 1px solid var(--wire); border-radius: 8px;
+  color: var(--t1); font-family: 'DM Mono', monospace; font-size: 10px;
+  text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: all .15s;
+}
+.histbtn:hover { border-color: var(--wire2); color: var(--t0); background: var(--bg4); }
+.delbtn {
+  width: 34px; height: 34px;
+  background: rgba(217,112,112,.06); border: 1px solid rgba(217,112,112,.12);
+  border-radius: 8px; color: var(--red); font-size: 15px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
+}
+.delbtn:hover { background: rgba(217,112,112,.18); }
+
+/* MODAL */
+.hi { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--wire); }
+.hi:last-child { border-bottom: none; }
+.hid { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--t2); }
+.hiw { font-family: 'Instrument Serif', serif; font-size: 26px; font-weight: 400; color: var(--t0); }
+.hidf { font-family: 'DM Mono', monospace; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
+.hidf.up { background: rgba(109,191,138,.08); color: var(--green); }
+.hidf.dn { background: rgba(217,112,112,.08); color: var(--red); }
+
+@media(max-width:860px){
+  .sidebar { position: static; width: 100%; height: auto; top: auto; }
+  .content { margin-left: 0; padding: 24px 20px; }
+  .pgrid { grid-template-columns: 1fr 1fr; }
+  .sb-form { padding: 12px 16px; }
+  .sb-form-ttl { font-size: 10px; margin-bottom: 10px; }
+  .sb-field { margin-bottom: 8px; }
+  .sb-field label { font-size: 10px; }
+  .sb-field select, .sb-field input { font-size: 13px; padding: 10px 10px; }
+  .sb-filter { padding: 10px 16px; }
+  .fb { padding: 10px 12px; font-size: 12px; min-height: 44px; }
+  .page-title { font-size: 32px; }
+}
+
+@media(max-width:480px){
+  .sidebar { padding: 0; }
+  .sb-header { padding: 16px 16px 12px; }
+  .sb-title { font-size: 20px; }
+  .sb-form { padding: 12px 16px; border-bottom: 1px solid var(--wire); }
+  .sb-form-ttl { font-size: 10px; margin-bottom: 10px; }
+  .sb-field { margin-bottom: 8px; }
+  .sb-field label { font-size: 10px; }
+  .sb-field select, .sb-field input { font-size: 14px; padding: 10px 10px; min-height: 44px; }
+  .sb-field-row { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .sb-filter { padding: 10px 16px; }
+  .sb-filter-ttl { font-size: 10px; margin-bottom: 8px; }
+  .fb { padding: 10px 12px; font-size: 12px; min-height: 44px; }
+  .content { padding: 20px 12px; }
+  .page-hd { margin-bottom: 20px; flex-direction: column; align-items: flex-start; }
+  .page-title { font-size: 24px; }
+  .page-count { font-size: 10px; }
+  .pgrid { grid-template-columns: 1fr; gap: 12px; }
+  .pcard { border-radius: 12px; }
+  .pc-top { padding: 14px 16px 10px; }
+  .pc-name { font-size: 14px; }
+  .pc-mid { padding: 12px 16px 10px; }
+  .pc-w { font-size: 40px; }
+  .pc-w span { font-size: 16px; }
+  .pc-bot { padding: 0 16px 12px; }
+  .pcact { padding: 0 16px 12px; gap: 6px; }
+  .histbtn { padding: 8px 10px; font-size: 10px; }
+  .delbtn { width: 32px; height: 32px; font-size: 14px; }
+  .modal { width: 96%; max-width: 100%; padding: 24px; }
+  .modal-x { width: 32px; height: 32px; }
+}
+</style>
+</head>
+<body>
+<div class="loader" id="loader">
+  <div class="loader-logo">Iron<em>Track</em></div>
+  <div class="loader-bar" aria-hidden="true"></div>
+</div>
+
+<nav class="nav">
+  <a class="nav-logo" href="index.html">Iron<span>Track</span></a>
+    <div class="nav-links">
+    <a href="index.html">Главная</a>
+    <a href="workout.html">Тренировки</a>
+    <a href="nutrition.html">Питание</a>
+    <a href="progress.html" class="active">Прогресс</a>
+    <a href="stats.html">Статистика</a>
+    <a href="diary.html">Дневник</a>
+    <a href="ai.html">ИИ</a>
+  </div>
+  <div class="nav-right">
+    <a href="profile.html" style="width:44px;height:44px;border-radius:50%;background:var(--bg3);border:1px solid var(--wire2);display:flex;align-items:center;justify-content:center;text-decoration:none;font-family:'Instrument Serif',serif;font-size:14px;color:var(--cream);transition:border-color .15s" id="nav-avatar">?</a><button class="nav-logout" onclick="doLogout()">Выйти</button>
+    <a class="nav-cta" href="ai.html">✦ Анализ</a>
+  </div>
+  <button class="nav-hamburger" id="nav-hamburger" onclick="toggleNavMenu()">☰</button>
+</nav>
+
+<div class="pw">
+  <div class="split">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sb-header">
+        <div class="sb-title">Прогресс</div>
+        <div class="sb-sub">Рекорды и веса</div>
+      </div>
+
+      <!-- ADD FORM -->
+      <div class="sb-form">
+        <div class="sb-form-ttl">Добавить запись</div>
+        <div class="sb-field">
+          <label>Упражнение</label>
+          <select id="prex">
+            <option>Жим лёжа</option><option>Жим гантелей лёжа</option>
+            <option>Приседания со штангой</option><option>Жим ногами</option>
+            <option>Становая тяга</option><option>Становая тяга сумо</option>
+            <option>Тяга верхнего блока</option><option>Подтягивания</option>
+            <option>Тяга штанги в наклоне</option><option>Жим стоя</option>
+            <option>Разводка гантелей</option><option>Сгибания на бицепс</option>
+            <option>Французский жим</option><option>Выпады</option><option>Икры стоя</option>
+          </select>
+        </div>
+        <div class="sb-field">
+          <label>Тип</label>
+          <select id="prtype"><option value="record">Рекорд</option><option value="working">Рабочий</option></select>
+        </div>
+        <div class="sb-field-row">
+          <div class="sb-field" style="margin-bottom:0"><label>Вес кг</label><input type="number" id="prw" placeholder="100" min="0" step="2.5"/></div>
+          <div class="sb-field" style="margin-bottom:0"><label>Повторов</label><input type="number" id="prr" placeholder="8" min="1"/></div>
+        </div>
+        <button class="btn btn-lime" onclick="addPR()" style="width:100%;margin-top:4px;justify-content:center">Сохранить</button>
+      </div>
+
+      <!-- FILTER -->
+      <div class="sb-filter">
+        <div class="sb-filter-ttl">Показать</div>
+        <div class="filter-btns">
+          <button class="fb active" onclick="setF(this,'all')"><span class="fb-dot"></span>Все записи</button>
+          <button class="fb" onclick="setF(this,'record')"><span class="fb-dot"></span>Только рекорды</button>
+          <button class="fb" onclick="setF(this,'working')"><span class="fb-dot"></span>Рабочие веса</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CONTENT -->
+    <div class="content" id="main-content" style="opacity:0;transition:opacity .2s ease">
+      <div class="page-hd">
+        <div>
+          <div class="page-eyebrow">Раздел</div>
+          <div class="page-title">Прогресс</div>
+        </div>
+        <div class="page-count" id="page-count">0 записей</div>
+      </div>
+
+      <div class="pgrid" id="pgrid"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="mbg">
+  <div class="modal">
+    <button class="modal-x" onclick="closeMod()">✕</button>
+    <div id="mttl" style="font-family:'Instrument Serif',serif;font-size:26px;font-weight:400;margin-bottom:3px;color:var(--t0)"></div>
+    <div id="msub" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:20px"></div>
+    <div id="mhist"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="config.js"></script>
+<script src="_supabase.js"></script>
+<script>
+requireAuth(); const user = getUser();
+async function doLogout(){ await signOut(); window.location.href='login.html'; }
+
+let records = [], dbId = null, filt = 'all';
+
+async function init(){
+  try{
+    const rows = await dbGet('progress', `user_id=eq.${user.id}&limit=1`);
+    if(rows && rows[0]){ records = rows[0].records||[]; dbId = rows[0].id; }
+  } catch(e){ console.error(e); }
+  render();
+}
+
+function setF(btn, f){
+  document.querySelectorAll('.fb').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filt = f; render();
+}
+
+function render(){
+  const fr = records.filter(r => filt==='all' || r.type===filt);
+  document.getElementById('page-count').textContent = fr.length + ' ' + (fr.length===1?'запись':fr.length<5?'записи':'записей');
+
+  if(!fr.length){
+    document.getElementById('pgrid').innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1">
+        <div style="font-family:'Instrument Serif',serif;font-size:22px;color:var(--t1);margin-bottom:8px">Пока пусто</div>
+        <p>Добавь первый рекорд или рабочий вес через форму слева</p>
+      </div>`;
+    return;
+  }
+
+  const mx = Math.max(...fr.map(p => p.weight));
+  document.getElementById('pgrid').innerHTML = fr.map(pr => {
+    const idx = records.indexOf(pr);
+    const prev = pr.history?.length >= 2 ? pr.history[pr.history.length-2].weight : pr.weight;
+    const diff = pr.weight - prev;
+    const pct = Math.round(pr.weight / mx * 100);
+    const lastDate = pr.history?.length ? pr.history[pr.history.length-1].date : '—';
+    const typeTag = pr.type === 'record'
+      ? `<span class="tag tag-lime">рекорд</span>`
+      : `<span class="tag tag-blue">рабочий</span>`;
+
+    return `
+    <div class="pcard">
+      <div class="pc-top">
+        <div class="pc-name">${pr.exercise}</div>
+        ${typeTag}
+      </div>
+      <div class="pc-mid">
+        <div class="pc-weight-wrap">
+          <div class="pc-w">${pr.weight}<span>кг</span></div>
+          ${pr.reps ? `<div class="pc-reps">${pr.reps} повт.</div>` : ''}
+        </div>
+        <div class="pc-diff ${diff > 0 ? 'up' : 'same'}">${diff > 0 ? '+'+diff+' кг' : '—'}</div>
+      </div>
+      <div class="pc-bot">
+        <div class="pcbar"><div class="pcbarf" style="width:${pct}%"></div></div>
+        <div class="pcmeta"><span>${lastDate}</span><span>${pr.history?.length||1} записей</span></div>
+      </div>
+      <div class="pcact">
+        <button class="histbtn" onclick="showHist(${idx})">История</button>
+        <button class="delbtn" onclick="delPR(${idx})">×</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function addPR(){
+  const ex = document.getElementById('prex').value;
+  const type = document.getElementById('prtype').value;
+  const w = parseFloat(document.getElementById('prw').value);
+  const reps = parseInt(document.getElementById('prr').value)||0;
+  if(!w || w <= 0) return;
+  const today = new Date().toLocaleDateString('ru',{day:'numeric',month:'short'});
+  const ei = records.findIndex(p => p.exercise===ex && p.type===type);
+  if(ei >= 0){
+    const pr = records[ei];
+    if(!pr.history) pr.history = [{weight:pr.weight, date:today}];
+    pr.history.push({weight:w, date:today});
+    pr.weight = w;
+    if(reps) pr.reps = reps;
+  } else {
+    records.push({exercise:ex, type, weight:w, reps:reps||0, history:[{weight:w, date:today}]});
+  }
+  await save();
+  document.getElementById('prw').value = '';
+  document.getElementById('prr').value = '';
+  render();
+}
+
+async function delPR(i){
+  if(!confirm('Удалить?')) return;
+  records.splice(i, 1);
+  await save(); render();
+}
+
+async function save(){
+  try{
+    const p = {user_id:user.id, records, updated_at:new Date().toISOString()};
+    if(dbId) p.id = dbId;
+    const res = await dbUpsert('progress', p);
+    if(res && res[0] && !dbId) dbId = res[0].id;
+    toast('сохранено','ok');
+  } catch(e){ toast('ошибка: '+e.message,'err'); }
+}
+
+function showHist(i){
+  const pr = records[i];
+  document.getElementById('mttl').textContent = pr.exercise;
+  document.getElementById('msub').textContent = (pr.type==='record'?'рекорд':'рабочий') + ' · история';
+  const hist = pr.history || [{weight:pr.weight, date:'—'}];
+  document.getElementById('mhist').innerHTML = [...hist].reverse().map((h,j,arr) => {
+    const prev = j < arr.length-1 ? arr[j+1].weight : null;
+    const d = prev ? h.weight - prev : 0;
+    return `
+    <div class="hi">
+      <div class="hid">${h.date}</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        ${d ? `<span class="hidf ${d>0?'up':'dn'}">${d>0?'+':''}${d}</span>` : ''}
+        <div class="hiw">${h.weight} кг</div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('mbg').classList.add('open');
+}
+
+function closeMod(){ document.getElementById('mbg').classList.remove('open'); }
+document.getElementById('mbg').addEventListener('click', function(e){ if(e.target===this) closeMod(); });
+function toast(msg,tp){ const t=document.getElementById('toast'); t.textContent=msg; t.className='toast show '+tp; setTimeout(()=>t.className='toast',2200); }
+init();
+</script>
+<script>
+function toggleNavMenu(){
+  var links = document.querySelector('.nav-links');
+  if(!links) return;
+  links.classList.toggle('mobile-open');
+}
+
+(function(){
+  function navigate(url){
+    document.body.classList.add('leaving');
+    setTimeout(function(){ window.location.href = url; }, 180);
+  }
+  document.addEventListener('click', function(e){
+    var a = e.target.closest('a');
+    if(!a) return;
+    var href = a.getAttribute('href');
+    if(!href || href.charAt(0)==='#' || href.startsWith('http') || href.startsWith('mailto') || a.target==='_blank') return;
+    e.preventDefault();
+    navigate(href);
+  });
+})();
+</script>
+
+
+<script>
+// Reveal content smoothly after data loads
+(function(){
+  var el = document.getElementById('main-content');
+  if(!el) return;
+  // Use MutationObserver to detect when dynamic content is first rendered
+  var revealed = false;
+  function reveal(){
+    if(revealed) return;
+    revealed = true;
+    requestAnimationFrame(function(){
+      el.style.opacity = '1';
+    });
+  }
+  // Fallback: reveal after 400ms max regardless
+  setTimeout(reveal, 400);
+  // Reveal as soon as any child is added to the content
+  var obs = new MutationObserver(function(){ reveal(); obs.disconnect(); });
+  obs.observe(el, { childList: true, subtree: true });
+})();
+</script>
+</body>
+</html>

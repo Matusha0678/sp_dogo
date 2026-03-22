@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Питание — IronTrack</title>
+<link rel="stylesheet" href="_style.css"/>
+<style>
+body { overflow-x: hidden; }
+.pw { padding: 0; max-width: 100%; }
+
+/* SPLIT */
+.split { display: flex; min-height: 100vh; }
+
+/* SIDEBAR */
+.sidebar {
+  position: fixed; top: 60px; left: 0; bottom: 0; width: 260px;
+  background: var(--bg2); border-right: 1px solid var(--wire);
+  display: flex; flex-direction: column; z-index: 100;
+}
+.sb-header { padding: 24px 22px 16px; border-bottom: 1px solid var(--wire); }
+.sb-title { font-family: 'Instrument Serif', serif; font-size: 26px; font-weight: 400; color: var(--t0); margin-bottom: 3px; }
+.sb-sub { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--t2); letter-spacing: 2px; text-transform: uppercase; }
+
+/* BODY PARAMS IN SIDEBAR */
+.sb-body { padding: 16px 22px; border-bottom: 1px solid var(--wire); }
+.sb-body-ttl { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--t1); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px; font-weight: 500; }
+.sb-field { margin-bottom: 10px; }
+.sb-field label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--t1); letter-spacing: 1px; text-transform: uppercase; display: block; margin-bottom: 5px; font-weight: 500; }
+.sb-field input { font-size: 14px; font-weight: 500; padding: 8px 12px; }
+
+/* BMI STATS */
+.sb-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 14px 22px; border-bottom: 1px solid var(--wire); }
+.sb-stat { background: var(--bg3); border-radius: 8px; padding: 10px 12px; text-align: center; }
+.sb-stat-v { font-family: 'Instrument Serif', serif; font-size: 20px; font-weight: 400; line-height: 1; }
+.sb-stat-l { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--t2); margin-top: 3px; text-transform: uppercase; letter-spacing: .5px; }
+
+/* DAY BUTTONS */
+.sb-days { flex: 1; overflow-y: auto; padding: 6px 0; }
+.dbt {
+  width: 100%; padding: 12px 22px;
+  background: transparent; border: none;
+  display: flex; align-items: center; gap: 11px;
+  cursor: pointer; color: var(--t2);
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  text-align: left; transition: background .15s, color .15s;
+  position: relative;
+}
+.dbt:hover { background: var(--bg3); color: var(--t0); }
+.dbt.active { background: var(--bg3); color: var(--cream); font-weight: 500; }
+.dbt.active::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; background: var(--cream); border-radius: 0 2px 2px 0; }
+.ddot { width: 6px; height: 6px; border-radius: 50%; background: var(--bg5); flex-shrink: 0; }
+.dbt.has-data .ddot { background: var(--green); }
+.dbt.active .ddot { background: var(--cream); }
+.dname { flex: 1; }
+.dcnt { font-family: 'DM Mono', monospace; font-size: 11px; background: var(--bg4); color: var(--t1); padding: 2px 8px; border-radius: 4px; }
+.dbt.active .dcnt { background: var(--cream-a); color: var(--cream); }
+
+/* CONTENT */
+.content { margin-left: 260px; padding: 80px 44px 60px; flex: 1; }
+
+/* MACRO STRIP */
+.macro-strip {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 12px; margin-bottom: 28px;
+}
+.mc {
+  background: var(--bg2); border: 1px solid var(--wire);
+  border-radius: 14px; padding: 20px 22px;
+  position: relative; overflow: hidden;
+}
+.mc::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; }
+.mc.k::after { background: var(--cream); }
+.mc.m::after { background: var(--blue); }
+.mc.p::after { background: var(--green); }
+.mcl { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--t1); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; font-weight: 500; }
+.mcv { font-family: 'Instrument Serif', serif; font-size: 42px; font-weight: 400; line-height: 1; }
+.mcs { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--t2); margin-top: 6px; }
+.pb { height: 2px; background: var(--bg4); margin-top: 12px; overflow: hidden; border-radius: 2px; }
+.pbf { height: 100%; background: var(--cream); transition: width .4s; border-radius: 2px; }
+
+/* DAY HEADER */
+.day-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
+}
+.day-title { font-family: 'Instrument Serif', serif; font-size: 36px; font-weight: 400; letter-spacing: -.5px; color: var(--t0); }
+.day-sub { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--t2); margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
+
+/* MEAL TABLE */
+.mlist-panel { background: var(--bg2); border: 1px solid var(--wire); border-radius: 14px; overflow: hidden; }
+.mlh { padding: 16px 20px; border-bottom: 1px solid var(--wire); display: flex; align-items: center; justify-content: space-between; }
+.mlh-t { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--t0); letter-spacing: 2px; text-transform: uppercase; font-weight: 600; }
+.colh {
+  padding: 8px 20px; background: var(--bg3);
+  display: grid; grid-template-columns: 28px 1fr 100px 100px 36px; gap: 10px;
+  font-family: 'DM Mono', monospace; font-size: 11px; color: var(--t1);
+  text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--wire); font-weight: 500;
+}
+.mrow {
+  display: grid; grid-template-columns: 28px 1fr 100px 100px 36px; gap: 10px;
+  align-items: center; padding: 10px 20px; border-bottom: 1px solid var(--wire); transition: background .1s;
+}
+.mrow:hover { background: rgba(255,255,255,.015); }
+.mrow:last-child { border-bottom: none; }
+.mn {
+  width: 24px; height: 24px; border-radius: 6px;
+  background: var(--bg4); display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Mono', monospace; font-size: 11px; color: var(--t2);
+}
+.mi { background: var(--bg3); border: 1px solid var(--wire); border-radius: 7px; padding: 7px 11px; color: var(--t0); font-family: 'DM Sans', sans-serif; font-size: 14px; }
+.mi:focus { border-color: var(--cream3); outline: none; box-shadow: 0 0 0 3px rgba(232,220,200,.07); }
+.mi::placeholder { color: var(--t3); }
+.mk { background: var(--bg3); border: 1px solid var(--wire); border-radius: 7px; padding: 7px 9px; color: var(--t0); font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; text-align: center; }
+.mk:focus { border-color: var(--cream3); outline: none; box-shadow: 0 0 0 3px rgba(232,220,200,.07); }
+.mt { background: var(--bg3); border: 1px solid var(--wire); border-radius: 7px; padding: 7px 9px; color: var(--t2); font-family: 'DM Mono', monospace; font-size: 12px; }
+.mt:focus { outline: none; border-color: var(--wire2); }
+.mdel { width: 30px; height: 30px; background: rgba(217,112,112,.06); border: 1px solid rgba(217,112,112,.12); border-radius: 7px; color: var(--red); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background .15s; }
+.mdel:hover { background: rgba(217,112,112,.18); }
+.mlfoot { padding: 14px 20px; border-top: 1px solid var(--wire); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+.addm { padding: 8px 18px; background: transparent; border: 1px dashed var(--wire2); border-radius: 8px; color: var(--t1); font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: all .15s; }
+.addm:hover { background: var(--bg3); border-color: var(--wire3); color: var(--t0); }
+
+@media(max-width:860px){
+  .sidebar { position: static; width: 100%; height: auto; top: auto; }
+  .sb-days { display: flex; overflow-x: auto; flex-direction: row; padding: 0; }
+  .content { margin-left: 0; padding: 24px 20px; }
+  .macro-strip { grid-template-columns: 1fr; }
+  .dbt { flex-direction: column; align-items: center; padding: 12px 14px; min-width: 70px; gap: 6px; font-size: 12px; border-right: 1px solid var(--wire); min-height: 44px; }
+  .mrow, .colh { grid-template-columns: 24px 1fr 80px 30px; }
+  .mt { display: none; }
+  .day-title { font-size: 28px; }
+  .mc { padding: 16px 18px; }
+  .mcv { font-size: 32px; }
+}
+
+@media(max-width:480px){
+  .sidebar { padding: 0; }
+  .sb-header { padding: 16px 16px 12px; }
+  .sb-title { font-size: 20px; }
+  .sb-body { padding: 12px 16px; }
+  .sb-body-ttl { font-size: 10px; margin-bottom: 10px; }
+  .sb-field { margin-bottom: 8px; }
+  .sb-field label { font-size: 10px; }
+  .sb-field input { font-size: 14px; padding: 10px 10px; }
+  .sb-stats { grid-template-columns: 1fr 1fr; gap: 6px; padding: 10px 16px; }
+  .sb-stat { padding: 8px 10px; }
+  .sb-stat-v { font-size: 18px; }
+  .sb-stat-l { font-size: 9px; }
+  .sb-days { padding: 0; }
+  .dbt { padding: 10px 12px; min-width: 60px; font-size: 11px; }
+  .content { padding: 20px 12px; }
+  .macro-strip { gap: 10px; margin-bottom: 20px; }
+  .mc { padding: 14px 14px; border-radius: 12px; }
+  .mcl { font-size: 10px; margin-bottom: 4px; }
+  .mcv { font-size: 24px; }
+  .mcs { font-size: 10px; margin-top: 4px; }
+  .day-header { margin-bottom: 16px; }
+  .day-title { font-size: 22px; }
+  .day-sub { font-size: 10px; }
+  .mlist-panel { border-radius: 12px; }
+  .mlh { padding: 12px 14px; }
+  .mlh-t { font-size: 11px; }
+  .colh { grid-template-columns: 20px 1fr 60px 28px; gap: 8px; padding: 8px 14px; font-size: 10px; }
+  .mrow { grid-template-columns: 20px 1fr 60px 28px; gap: 8px; padding: 8px 14px; }
+  .mn { width: 20px; height: 20px; font-size: 10px; }
+  .mi { padding: 8px 10px; font-size: 13px; }
+  .mk { padding: 6px 8px; font-size: 12px; }
+  .mdel { width: 28px; height: 28px; font-size: 13px; }
+  .mlfoot { padding: 10px 14px; }
+  .addm { padding: 8px 14px; font-size: 10px; }
+}
+</style>
+</head>
+<body>
+<div class="loader" id="loader">
+  <div class="loader-logo">Iron<em>Track</em></div>
+  <div class="loader-bar" aria-hidden="true"></div>
+</div>
+
+<nav class="nav">
+  <a class="nav-logo" href="index.html">Iron<span>Track</span></a>
+    <div class="nav-links">
+    <a href="index.html">Главная</a>
+    <a href="workout.html">Тренировки</a>
+    <a href="nutrition.html" class="active">Питание</a>
+    <a href="progress.html">Прогресс</a>
+    <a href="stats.html">Статистика</a>
+    <a href="diary.html">Дневник</a>
+    <a href="ai.html">ИИ</a>
+  </div>
+  <div class="nav-right">
+    <a href="profile.html" style="width:44px;height:44px;border-radius:50%;background:var(--bg3);border:1px solid var(--wire2);display:flex;align-items:center;justify-content:center;text-decoration:none;font-family:'Instrument Serif',serif;font-size:14px;color:var(--cream);transition:border-color .15s" id="nav-avatar">?</a><button class="nav-logout" onclick="doLogout()">Выйти</button>
+    <a class="nav-cta" href="ai.html">✦ Анализ</a>
+  </div>
+  <button class="nav-hamburger" id="nav-hamburger" onclick="toggleNavMenu()">☰</button>
+</nav>
+
+<div class="pw">
+  <div class="split">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sb-header">
+        <div class="sb-title">Питание</div>
+        <div class="sb-sub">Дневник еды</div>
+      </div>
+
+      <!-- BODY PARAMS -->
+      <div class="sb-body">
+        <div class="sb-body-ttl">Параметры тела</div>
+        <div class="sb-field"><label>Вес кг</label><input type="number" id="bw" placeholder="80" oninput="calcBMI()"/></div>
+        <div class="sb-field"><label>Рост см</label><input type="number" id="bh" placeholder="180" oninput="calcBMI()"/></div>
+        <div class="sb-field"><label>Возраст</label><input type="number" id="ba" placeholder="25" oninput="calcBMI()"/></div>
+      </div>
+
+      <!-- BMI STATS -->
+      <div class="sb-stats">
+        <div class="sb-stat"><div class="sb-stat-v" id="bmi" style="color:var(--blue)">—</div><div class="sb-stat-l">ИМТ</div></div>
+        <div class="sb-stat"><div class="sb-stat-v" id="bst" style="font-size:13px;font-family:'DM Sans',sans-serif;padding-top:4px">—</div><div class="sb-stat-l">Статус</div></div>
+        <div class="sb-stat"><div class="sb-stat-v" id="tdee" style="color:var(--cream)">—</div><div class="sb-stat-l">Норма</div></div>
+        <div class="sb-stat"><div class="sb-stat-v" id="prot" style="color:var(--green)">—</div><div class="sb-stat-l">Белок г</div></div>
+      </div>
+
+      <!-- DAYS -->
+      <div class="sb-days">
+        <button class="dbt active" onclick="selDay(this,'Понедельник')" data-day="Понедельник"><span class="ddot"></span><span class="dname">Понедельник</span><span class="dcnt" id="cnt-Понедельник">0</span></button>
+        <button class="dbt" onclick="selDay(this,'Вторник')" data-day="Вторник"><span class="ddot"></span><span class="dname">Вторник</span><span class="dcnt" id="cnt-Вторник">0</span></button>
+        <button class="dbt" onclick="selDay(this,'Среда')" data-day="Среда"><span class="ddot"></span><span class="dname">Среда</span><span class="dcnt" id="cnt-Среда">0</span></button>
+        <button class="dbt" onclick="selDay(this,'Четверг')" data-day="Четверг"><span class="ddot"></span><span class="dname">Четверг</span><span class="dcnt" id="cnt-Четверг">0</span></button>
+        <button class="dbt" onclick="selDay(this,'Пятница')" data-day="Пятница"><span class="ddot"></span><span class="dname">Пятница</span><span class="dcnt" id="cnt-Пятница">0</span></button>
+        <button class="dbt" onclick="selDay(this,'Суббота')" data-day="Суббота"><span class="ddot"></span><span class="dname">Суббота</span><span class="dcnt" id="cnt-Суббота">0</span></button>
+        <button class="dbt" onclick="selDay(this,'Воскресенье')" data-day="Воскресенье"><span class="ddot"></span><span class="dname">Воскресенье</span><span class="dcnt" id="cnt-Воскресенье">0</span></button>
+      </div>
+    </aside>
+
+    <!-- CONTENT -->
+    <div class="content" id="main-content" style="opacity:0;transition:opacity .2s ease">
+
+      <!-- MACRO STRIP -->
+      <div class="macro-strip">
+        <div class="mc k">
+          <div class="mcl">Калории сегодня</div>
+          <div class="mcv" id="tot-k" style="color:var(--cream)">0</div>
+          <div class="mcs" id="kg">Введи параметры тела</div>
+          <div class="pb"><div class="pbf" id="kb" style="width:0%"></div></div>
+        </div>
+        <div class="mc m">
+          <div class="mcl">Приёмов пищи</div>
+          <div class="mcv" id="tot-m" style="color:var(--blue)">0</div>
+          <div class="mcs" id="curdn">Понедельник</div>
+        </div>
+        <div class="mc p">
+          <div class="mcl">% от нормы</div>
+          <div class="mcv" id="pctv" style="color:var(--green)">0%</div>
+          <div class="mcs" id="pcts">—</div>
+        </div>
+      </div>
+
+      <!-- DAY HEADER + MEAL LIST -->
+      <div class="day-header">
+        <div>
+          <div class="day-title" id="day-title">Понедельник</div>
+          <div class="day-sub" id="day-sub">нет блюд</div>
+        </div>
+        <button class="btn btn-lime" id="savebtn" onclick="saveDay()">Сохранить</button>
+      </div>
+
+      <div class="mlist-panel">
+        <div class="mlh">
+          <span class="mlh-t">Блюда</span>
+        </div>
+        <div class="colh"><div></div><div>Название</div><div style="text-align:center">Ккал</div><div style="text-align:center">Время</div><div></div></div>
+        <div id="mlist"></div>
+        <div class="mlfoot">
+          <button class="addm" onclick="addMeal()">+ добавить блюдо</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="config.js"></script>
+<script src="_supabase.js"></script>
+<script>
+requireAuth(); const user = getUser();
+async function doLogout(){ await signOut(); window.location.href='login.html'; }
+
+const DAYS = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'];
+let curDay = 'Понедельник', meals = {}, body = {}, rowIds = {};
+
+async function init(){
+  try{
+    const rows = await dbGet('nutrition', `user_id=eq.${user.id}`);
+    (rows||[]).forEach(r => {
+      meals[r.day] = r.meals||[];
+      rowIds[r.day] = r.id;
+      if(r.body_params?.weight && !body.weight){
+        body = r.body_params;
+        document.getElementById('bw').value = body.weight||'';
+        document.getElementById('bh').value = body.height||'';
+        document.getElementById('ba').value = body.age||'';
+        calcBMI();
+      }
+    });
+  } catch(e){ console.error(e); }
+  render();
+}
+
+function selDay(btn, day){
+  document.querySelectorAll('.dbt').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  curDay = day;
+  document.getElementById('curdn').textContent = day;
+  document.getElementById('day-title').textContent = day;
+  render();
+}
+
+function render(){
+  const ms = meals[curDay]||[];
+  document.getElementById('day-sub').textContent = ms.filter(m=>m.name).length
+    ? ms.filter(m=>m.name).length + ' блюд записано'
+    : 'нет блюд';
+
+  document.getElementById('mlist').innerHTML = ms.length
+    ? ms.map((m,i) => `
+      <div class="mrow">
+        <div class="mn">${i+1}</div>
+        <input class="mi" type="text" placeholder="что ел..." value="${m.name||''}" oninput="upM(${i},'name',this.value)"/>
+        <input class="mk" type="number" placeholder="ккал" value="${m.kcal||''}" oninput="upM(${i},'kcal',+this.value);recalc()"/>
+        <input class="mt" type="time" value="${m.time||''}" onchange="upM(${i},'time',this.value)"/>
+        <button class="mdel" onclick="delM(${i})">×</button>
+      </div>`).join('')
+    : '<div class="empty-state" style="border:none;padding:36px"><p>Пока ничего — добавь первое блюдо</p></div>';
+
+  recalc(); updSb();
+}
+
+function addMeal(){ if(!meals[curDay])meals[curDay]=[]; meals[curDay].push({name:'',kcal:0,time:''}); render(); }
+function delM(i){ meals[curDay].splice(i,1); render(); }
+function upM(i,f,v){ if(meals[curDay]) meals[curDay][i][f]=v; }
+
+function recalc(){
+  const ms = meals[curDay]||[];
+  const tot = ms.reduce((s,m) => s+(+m.kcal||0), 0);
+  const w=+document.getElementById('bw').value, h=+document.getElementById('bh').value, a=+document.getElementById('ba').value;
+  const tdee = (w&&h&&a) ? Math.round((10*w+6.25*h-5*a+5)*1.55) : 0;
+  const pct = tdee ? Math.round(tot/tdee*100) : 0;
+  document.getElementById('tot-k').textContent = tot;
+  document.getElementById('tot-m').textContent = ms.filter(m=>m.name).length;
+  document.getElementById('pctv').textContent = pct+'%';
+  document.getElementById('kb').style.width = Math.min(pct,100)+'%';
+  document.getElementById('kg').textContent = tdee ? 'цель: '+tdee+' ккал' : 'введи параметры тела';
+  document.getElementById('pcts').textContent = !tdee?'—':pct<70?'недобор':pct<=110?'норма ✓':'перебор';
+}
+
+function calcBMI(){
+  const w=+document.getElementById('bw').value, h=+document.getElementById('bh').value, a=+document.getElementById('ba').value;
+  body = {weight:w||'', height:h||'', age:a||''};
+  if(w&&h){
+    const b = w/((h/100)**2);
+    document.getElementById('bmi').textContent = b.toFixed(1);
+    document.getElementById('bst').textContent = b<18.5?'дефицит':b<25?'норма ✓':b<30?'избыток':'ожирение';
+    const t = (w&&h&&a) ? Math.round((10*w+6.25*h-5*a+5)*1.55) : 0;
+    document.getElementById('tdee').textContent = t||'—';
+    document.getElementById('prot').textContent = w ? Math.round(w*1.8)+'г' : '—';
+  } else {
+    ['bmi','tdee','prot','bst'].forEach(id => document.getElementById(id).textContent='—');
+  }
+  recalc();
+}
+
+function updSb(){
+  DAYS.forEach(d => {
+    const c = (meals[d]||[]).filter(m=>m.name).length;
+    const el = document.getElementById('cnt-'+d); if(el) el.textContent = c;
+    const btn = document.querySelector(`[data-day="${d}"]`);
+    if(btn) btn.classList.toggle('has-data', c>0);
+  });
+}
+
+async function saveDay(){
+  const btn = document.getElementById('savebtn');
+  btn.disabled=true; btn.innerHTML='<div class="spin"></div>';
+  try{
+    const p = {user_id:user.id, day:curDay, meals:meals[curDay]||[], body_params:body, updated_at:new Date().toISOString()};
+    if(rowIds[curDay]) p.id = rowIds[curDay];
+    const res = await dbUpsert('nutrition', p);
+    if(res&&res[0]&&!rowIds[curDay]) rowIds[curDay]=res[0].id;
+    toast('сохранено','ok');
+  } catch(e){ toast('ошибка: '+e.message,'err'); }
+  finally{ btn.disabled=false; btn.innerHTML='Сохранить'; }
+}
+
+function toast(msg,tp){ const t=document.getElementById('toast'); t.textContent=msg; t.className='toast show '+tp; setTimeout(()=>t.className='toast',2200); }
+init();
+</script>
+<script>
+function toggleNavMenu(){
+  var links = document.querySelector('.nav-links');
+  if(!links) return;
+  links.classList.toggle('mobile-open');
+}
+
+(function(){
+  function navigate(url){
+    document.body.classList.add('leaving');
+    setTimeout(function(){ window.location.href = url; }, 180);
+  }
+  document.addEventListener('click', function(e){
+    var a = e.target.closest('a');
+    if(!a) return;
+    var href = a.getAttribute('href');
+    if(!href || href.charAt(0)==='#' || href.startsWith('http') || href.startsWith('mailto') || a.target==='_blank') return;
+    e.preventDefault();
+    navigate(href);
+  });
+})();
+</script>
+
+
+<script>
+// Reveal content smoothly after data loads
+(function(){
+  var el = document.getElementById('main-content');
+  if(!el) return;
+  // Use MutationObserver to detect when dynamic content is first rendered
+  var revealed = false;
+  function reveal(){
+    if(revealed) return;
+    revealed = true;
+    requestAnimationFrame(function(){
+      el.style.opacity = '1';
+    });
+  }
+  // Fallback: reveal after 400ms max regardless
+  setTimeout(reveal, 400);
+  // Reveal as soon as any child is added to the content
+  var obs = new MutationObserver(function(){ reveal(); obs.disconnect(); });
+  obs.observe(el, { childList: true, subtree: true });
+})();
+</script>
+</body>
+</html>

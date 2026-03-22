@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>ИИ-Анализ — IronTrack</title>
+<link rel="stylesheet" href="_style.css"/>
+<style>
+body { overflow-x: hidden; }
+.pw { padding: 0; max-width: 100%; }
+.split { display: flex; min-height: 100vh; }
+
+/* SIDEBAR */
+.sidebar {
+  position: fixed; top: 60px; left: 0; bottom: 0; width: 260px;
+  background: var(--bg2); border-right: 1px solid var(--wire);
+  display: flex; flex-direction: column; z-index: 100;
+}
+.sb-header { padding: 24px 22px 20px; border-bottom: 1px solid var(--wire); }
+.sb-kicker {
+  font-family: 'DM Mono', monospace; font-size: 10px; color: var(--t3);
+  letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 7px;
+}
+.ai-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--cream); animation: pulse 2s infinite; flex-shrink: 0; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.25} }
+.sb-title { font-family: 'Instrument Serif', serif; font-size: 26px; font-weight: 400; color: var(--t0); margin-bottom: 4px; }
+.sb-desc { font-size: 13px; color: var(--t2); line-height: 1.55; }
+
+.sb-data { flex: 1; overflow-y: auto; padding: 16px 0; }
+.dp-block { padding: 0 22px 16px; border-bottom: 1px solid var(--wire); margin-bottom: 4px; }
+.dp-block:last-child { border-bottom: none; }
+.dp-hd { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; padding-top: 14px; }
+.dp-ico {
+  width: 28px; height: 28px; border-radius: 7px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.dp-ico.w { background: var(--cream-a); }
+.dp-ico.n { background: rgba(77,158,212,.08); }
+.dp-ico.p { background: rgba(109,191,138,.08); }
+.dp-ico svg { width: 14px; height: 14px; }
+.dp-ttl { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--t2); letter-spacing: 1.5px; text-transform: uppercase; }
+.dp-item { font-size: 12px; color: var(--t1); padding: 4px 0; border-bottom: 1px solid var(--wire); display: flex; justify-content: space-between; font-family: 'DM Sans', sans-serif; }
+.dp-item:last-of-type { border-bottom: none; }
+.dp-item span { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--t2); }
+.dp-empty { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--t3); font-style: italic; }
+.dp-link { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--cream2); text-decoration: none; margin-top: 8px; display: block; letter-spacing: 1px; text-transform: uppercase; transition: opacity .15s; }
+.dp-link:hover { opacity: .7; }
+
+/* CONTENT */
+.content { margin-left: 260px; padding: 52px 56px 72px; flex: 1; }
+
+/* READY STATE */
+.az-state { text-align: center; max-width: 540px; margin: 0 auto; padding-top: 80px; }
+.az-big-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: 72px; line-height: 1.05; letter-spacing: -2px;
+  color: var(--t0); margin-bottom: 20px;
+}
+.az-big-title em { font-style: italic; color: var(--cream); }
+.az-sub { font-size: 15px; color: var(--t2); line-height: 1.65; margin-bottom: 44px; }
+.az-btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 16px 48px; border: none; cursor: pointer;
+  background: var(--cream); color: var(--bg);
+  font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600;
+  border-radius: 12px; transition: background .15s, transform .15s;
+}
+.az-btn:hover { background: var(--cream2); transform: translateY(-2px); }
+.az-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+.az-note { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--t3); margin-top: 14px; letter-spacing: 1px; text-transform: uppercase; }
+
+/* LOADING STATE */
+.ld-state {
+  display: none; max-width: 400px; margin: 80px auto 0;
+  text-align: center;
+}
+.ld-orb {
+  width: 80px; height: 80px; border-radius: 50%;
+  border: 1px solid rgba(232,220,200,.15);
+  margin: 0 auto 32px;
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+}
+.ld-orb::before {
+  content: '';
+  position: absolute; inset: -1px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  border-top-color: var(--cream);
+  animation: spin 1.2s linear infinite;
+}
+.ld-orb::after {
+  content: '';
+  position: absolute; inset: 8px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  border-top-color: rgba(232,220,200,.3);
+  animation: spin .8s linear infinite reverse;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.ld-orb-inner {
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--cream); opacity: .6;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+.ld-title { font-family: 'Instrument Serif', serif; font-size: 32px; font-weight: 400; color: var(--t0); margin-bottom: 6px; }
+.ld-sub { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--t3); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 36px; }
+.ld-steps { display: flex; flex-direction: column; gap: 10px; text-align: left; }
+.ls {
+  font-family: 'DM Mono', monospace; font-size: 12px; color: var(--t3);
+  display: flex; align-items: center; gap: 12px;
+  text-transform: uppercase; letter-spacing: 1px;
+  padding: 10px 14px; border-radius: 8px;
+  border: 1px solid transparent;
+  transition: all .3s ease;
+}
+.ls-icon {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 1px solid var(--bg5);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 9px; color: var(--t3);
+  transition: all .3s ease;
+}
+.ls.done { color: var(--green); background: rgba(109,191,138,.04); border-color: rgba(109,191,138,.1); }
+.ls.done .ls-icon { background: rgba(109,191,138,.12); border-color: rgba(109,191,138,.3); color: var(--green); }
+.ls.active { color: var(--t0); background: var(--cream-b); border-color: rgba(232,220,200,.12); }
+.ls.active .ls-icon { background: var(--cream-a); border-color: rgba(232,220,200,.3); color: var(--cream); animation: pulse 1s ease-in-out infinite; }
+
+/* ERROR */
+.errbox { background: var(--bg2); border: 1px solid rgba(217,112,112,.2); border-radius: 14px; padding: 32px; text-align: center; display: none; max-width: 400px; margin: 80px auto 0; }
+.errbox p { font-size: 14px; color: var(--red); margin-bottom: 16px; font-family: 'DM Mono', monospace; line-height: 1.6; }
+
+/* RESULT */
+.result-sec { display: none; }
+.rtop {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  margin-bottom: 32px; flex-wrap: wrap; gap: 12px;
+  padding-bottom: 28px; border-bottom: 1px solid var(--wire);
+}
+.rttl { font-family: 'Instrument Serif', serif; font-size: 48px; font-weight: 400; letter-spacing: -.5px; line-height: .95; }
+.rmeta { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--t3); margin-top: 8px; }
+
+/* SCORE */
+.overall {
+  background: var(--bg2); border: 1px solid var(--wire);
+  border-radius: 18px; padding: 36px 40px; margin-bottom: 24px;
+  display: grid; grid-template-columns: auto 1fr; gap: 40px; align-items: center;
+  position: relative; overflow: hidden;
+}
+.overall::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--cream), transparent);
+  opacity: .4;
+}
+.ov-score-wrap { text-align: center; }
+.ov-score {
+  font-family: 'Instrument Serif', serif;
+  font-size: 100px; line-height: 1; letter-spacing: -4px; color: var(--cream);
+  display: block;
+}
+.ov-max { font-size: 18px; color: var(--t3); font-family: 'DM Mono', monospace; letter-spacing: 1px; }
+.ov-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--t3); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+.ov-verdict { font-size: 17px; color: var(--t0); line-height: 1.65; font-weight: 400; font-family: 'DM Sans', sans-serif; }
+
+/* SECTION CARDS */
+.rcards { display: flex; flex-direction: column; gap: 10px; }
+.rc {
+  background: var(--bg2); border: 1px solid var(--wire);
+  border-radius: 14px; overflow: hidden;
+  transition: border-color .2s, transform .2s;
+}
+.rc:hover { border-color: var(--wire2); }
+.rch {
+  padding: 18px 22px; display: flex; align-items: center; gap: 14px;
+  cursor: pointer; transition: background .15s; user-select: none;
+}
+.rch:hover { background: var(--bg3); }
+
+/* SVG ICON IN CARD */
+.rch-ico {
+  width: 36px; height: 36px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; background: var(--bg4);
+  transition: background .15s;
+}
+.rch-ico svg { width: 17px; height: 17px; }
+.rc:hover .rch-ico { background: var(--bg5); }
+
+.rch-ttl { font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; flex: 1; color: var(--t0); }
+.rch-sc {
+  font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 500;
+  padding: 4px 10px; border-radius: 5px; letter-spacing: .5px; text-transform: uppercase;
+}
+.rch-sc.good { background: rgba(109,191,138,.08); color: var(--green); border: 1px solid rgba(109,191,138,.18); }
+.rch-sc.ok   { background: var(--cream-a); color: var(--cream); border: 1px solid rgba(232,220,200,.2); }
+.rch-sc.warn { background: rgba(212,168,90,.08); color: var(--amber); border: 1px solid rgba(212,168,90,.18); }
+.rch-sc.bad  { background: rgba(217,112,112,.08); color: var(--red); border: 1px solid rgba(217,112,112,.18); }
+
+.rch-arr {
+  width: 28px; height: 28px; border-radius: 7px;
+  background: var(--bg4); border: 1px solid var(--wire);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: transform .25s, background .15s;
+  color: var(--t3); font-size: 11px;
+}
+.rc.open .rch-arr { transform: rotate(180deg); background: var(--bg5); }
+
+.rcb {
+  padding: 0 22px; max-height: 0; overflow: hidden;
+  font-size: 15px; line-height: 1.8; color: var(--t1);
+  transition: max-height .4s cubic-bezier(.4,0,.2,1), padding .3s ease;
+  border-top: 1px solid transparent;
+}
+.rc.open .rcb {
+  max-height: 800px; padding: 20px 22px 22px;
+  border-top-color: var(--wire);
+}
+.rcb p { margin-bottom: 12px; }
+.rcb p:last-child { margin-bottom: 0; }
+.rcb strong { color: var(--t0); font-weight: 600; }
+.rcb ul { padding-left: 18px; margin-top: 6px; }
+.rcb ul li { margin-bottom: 6px; }
+
+/* ANIMATE CARDS IN */
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.rc { animation: cardIn .3s ease both; }
+.rc:nth-child(1) { animation-delay: .05s; }
+.rc:nth-child(2) { animation-delay: .10s; }
+.rc:nth-child(3) { animation-delay: .15s; }
+.rc:nth-child(4) { animation-delay: .20s; }
+.rc:nth-child(5) { animation-delay: .25s; }
+
+@media(max-width:860px){
+  .sidebar { position: static; width: 100%; height: auto; top: auto; }
+  .content { margin-left: 0; padding: 32px 20px; }
+  .az-big-title { font-size: 48px; }
+  .overall { grid-template-columns: 1fr; text-align: center; gap: 20px; padding: 28px 24px; }
+  .ov-score { font-size: 72px; }
+  .sb-header { padding: 16px 16px 12px; }
+  .sb-title { font-size: 20px; }
+  .dp-block { padding: 0 16px 12px; }
+  .rttl { font-size: 32px; }
+  .rch { border-radius: 12px; }
+  .rch-ttl { font-size: 14px; }
+}
+
+@media(max-width:480px){
+  .sidebar { padding: 0; }
+  .sb-header { padding: 16px 16px 12px; }
+  .sb-title { font-size: 18px; }
+  .sb-kicker { font-size: 9px; margin-bottom: 8px; }
+  .sb-desc { font-size: 12px; }
+  .dp-block { padding: 0 16px 12px; margin-bottom: 2px; }
+  .dp-hd { gap: 8px; margin-bottom: 8px; padding-top: 10px; }
+  .dp-ico { width: 24px; height: 24px; font-size: 10px; }
+  .dp-ttl { font-size: 9px; }
+  .dp-item { font-size: 11px; padding: 3px 0; }
+  .content { padding: 24px 12px; }
+  .az-state { padding-top: 40px; }
+  .az-big-title { font-size: 36px; line-height: 1.1; }
+  .az-sub { font-size: 14px; margin-bottom: 32px; }
+  .az-btn { padding: 12px 32px; font-size: 14px; min-height: 44px; }
+  .az-note { font-size: 10px; }
+  .ld-state { margin-top: 40px; }
+  .ld-orb { width: 60px; height: 60px; margin-bottom: 24px; }
+  .ld-title { font-size: 24px; margin-bottom: 4px; }
+  .ld-sub { font-size: 9px; margin-bottom: 24px; }
+  .ls { padding: 10px 12px; font-size: 11px; gap: 10px; }
+  .ls-icon { width: 18px; height: 18px; font-size: 8px; }
+  .rtop { margin-bottom: 24px; padding-bottom: 20px; flex-direction: column; align-items: flex-start; }
+  .rttl { font-size: 28px; }
+  .rmeta { font-size: 10px; }
+  .overall { padding: 20px 16px; gap: 16px; border-radius: 14px; }
+  .ov-score-wrap { text-align: center; }
+  .ov-score { font-size: 56px; }
+  .ov-max { font-size: 16px; }
+  .ov-label { font-size: 9px; margin-bottom: 8px; }
+  .ov-verdict { font-size: 14px; }
+  .rcards { gap: 8px; }
+  .rc { border-radius: 12px; }
+  .rch { padding: 14px 16px; gap: 12px; }
+  .rch-ico { width: 32px; height: 32px; border-radius: 8px; }
+  .rch-ico svg { width: 15px; height: 15px; }
+  .rch-ttl { font-size: 14px; }
+  .rch-sc { font-size: 9px; padding: 3px 8px; }
+  .rch-arr { width: 24px; height: 24px; font-size: 10px; }
+  .rcb { padding: 0 16px; font-size: 14px; }
+  .rc.open .rcb { padding: 16px 16px 16px; }
+  .errbox { padding: 24px 16px; border-radius: 12px; }
+  .errbox p { font-size: 13px; }
+  .modal { width: 96%; max-width: 100%; padding: 24px; }
+}
+</style>
+</head>
+<body>
+<div class="loader" id="loader">
+  <div class="loader-logo">Iron<em>Track</em></div>
+  <div class="loader-bar" aria-hidden="true"></div>
+</div>
+
+<nav class="nav">
+  <a class="nav-logo" href="index.html">Iron<span>Track</span></a>
+    <div class="nav-links">
+    <a href="index.html">Главная</a>
+    <a href="workout.html">Тренировки</a>
+    <a href="nutrition.html">Питание</a>
+    <a href="progress.html">Прогресс</a>
+    <a href="stats.html">Статистика</a>
+    <a href="diary.html">Дневник</a>
+    <a href="ai.html" class="active">ИИ</a>
+  </div>
+  <div class="nav-right">
+    <a href="profile.html" style="width:44px;height:44px;border-radius:50%;background:var(--bg3);border:1px solid var(--wire2);display:flex;align-items:center;justify-content:center;text-decoration:none;font-family:'Instrument Serif',serif;font-size:14px;color:var(--cream);transition:border-color .15s" id="nav-avatar">?</a><button class="nav-logout" onclick="doLogout()">Выйти</button>
+  </div>
+  <button class="nav-hamburger" id="nav-hamburger" onclick="toggleNavMenu()">☰</button>
+</nav>
+
+<div class="pw">
+  <div class="split">
+
+    <aside class="sidebar">
+      <div class="sb-header">
+        <div class="sb-kicker"><span class="ai-dot"></span>Персональный анализ</div>
+        <div class="sb-title">ИИ-Анализ</div>
+        <div class="sb-desc">Данные из твоих разделов — ИИ разберёт и скажет что менять.</div>
+      </div>
+      <div class="sb-data" id="dpg">
+        <div class="dp-block">
+          <div class="dp-hd">
+            <div class="dp-ico w"><svg viewBox="0 0 16 16" fill="none" stroke="var(--cream)" stroke-width="1.6" stroke-linecap="round"><path d="M2 8h12M4 5.5l-2 2.5 2 2.5M12 5.5l2 2.5-2 2.5"/></svg></div>
+            <div class="dp-ttl">Тренировки</div>
+          </div>
+          <div class="dp-empty">загрузка...</div>
+        </div>
+        <div class="dp-block">
+          <div class="dp-hd">
+            <div class="dp-ico n"><svg viewBox="0 0 16 16" fill="none" stroke="var(--blue)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2v5a3 3 0 006 0V2"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="5" y1="14" x2="11" y2="14"/></svg></div>
+            <div class="dp-ttl">Питание</div>
+          </div>
+          <div class="dp-empty">загрузка...</div>
+        </div>
+        <div class="dp-block">
+          <div class="dp-hd">
+            <div class="dp-ico p"><svg viewBox="0 0 16 16" fill="none" stroke="var(--green)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,12 6,7.5 9.5,9.5 14,4"/><polyline points="11,4 14,4 14,7"/></svg></div>
+            <div class="dp-ttl">Прогресс</div>
+          </div>
+          <div class="dp-empty">загрузка...</div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="content" id="main-content" style="opacity:0;transition:opacity .2s ease">
+
+      <!-- READY -->
+      <div class="az-state" id="azwrap">
+        <div class="az-big-title">Что реально<br><em>работает</em></div>
+        <p class="az-sub">Заполни тренировки, питание и прогресс — ИИ разберёт твои данные и скажет что конкретно менять. Без воды и мотивационных цитат.</p>
+        <button class="az-btn" id="azbtn" onclick="startAI()">✦ Запустить анализ</button>
+        <p class="az-note">Займёт несколько секунд</p>
+      </div>
+
+      <!-- LOADING -->
+      <div class="ld-state" id="ldwrap">
+        <div class="ld-orb"><div class="ld-orb-inner"></div></div>
+        <div class="ld-title">Анализирую</div>
+        <div class="ld-sub">Подождите немного</div>
+        <div class="ld-steps">
+          <div class="ls active" id="ls1"><span class="ls-icon">◉</span>Читаю данные</div>
+          <div class="ls" id="ls2"><span class="ls-icon">○</span>Анализирую тренировки</div>
+          <div class="ls" id="ls3"><span class="ls-icon">○</span>Смотрю питание</div>
+          <div class="ls" id="ls4"><span class="ls-icon">○</span>Пишу рекомендации</div>
+        </div>
+      </div>
+
+      <!-- ERROR -->
+      <div class="errbox" id="errbox">
+        <p id="errmsg">Что-то пошло не так</p>
+        <button class="btn btn-ghost" onclick="resetUI()">Попробовать снова</button>
+      </div>
+
+      <!-- RESULT -->
+      <div class="result-sec" id="ressec"></div>
+
+    </div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="_supabase.js"></script>
+<script>
+requireAuth(); const user = getUser();
+async function doLogout(){ await signOut(); window.location.href='login.html'; }
+
+const DM = {mon:'Пн',tue:'Вт',wed:'Ср',thu:'Чт',fri:'Пт',sat:'Сб',sun:'Вс'};
+const DF = {mon:'Понедельник',tue:'Вторник',wed:'Среда',thu:'Четверг',fri:'Пятница',sat:'Суббота',sun:'Воскресенье'};
+let allData = {};
+let config = new Config(); // Initialize config globally
+// SVG icons for section cards (no emojis)
+const ICONS = {
+  'Тренировки': `<svg viewBox="0 0 16 16" fill="none" stroke="var(--t1)" stroke-width="1.6" stroke-linecap="round"><path d="M2 8h12M4 5.5l-2 2.5 2 2.5M12 5.5l2 2.5-2 2.5"/></svg>`,
+  'Питание':    `<svg viewBox="0 0 16 16" fill="none" stroke="var(--t1)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2v5a3 3 0 006 0V2"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="5" y1="14" x2="11" y2="14"/></svg>`,
+  'Прогресс':   `<svg viewBox="0 0 16 16" fill="none" stroke="var(--t1)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,12 6,7.5 9.5,9.5 14,4"/><polyline points="11,4 14,4 14,7"/></svg>`,
+  'Что делать прямо сейчас': `<svg viewBox="0 0 16 16" fill="none" stroke="var(--cream)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l1.4 4H14l-3.6 2.6 1.4 4.4L8 10.5l-3.8 2.5 1.4-4.4L2 6h4.6z"/></svg>`,
+  'Отдых и восстановление': `<svg viewBox="0 0 16 16" fill="none" stroke="var(--t1)" stroke-width="1.6" stroke-linecap="round"><path d="M2 10c0-3.3 2.7-6 6-6 1.8 0 3.4.8 4.5 2"/><path d="M14 10c0 3.3-2.7 6-6 6s-6-2.7-6-6"/><path d="M8 7v3l2 1"/></svg>`,
+};
+
+function getIcon(title){
+  for(const key in ICONS){ if(title.includes(key.split(' ')[0])) return ICONS[key]; }
+  return `<svg viewBox="0 0 16 16" fill="none" stroke="var(--t1)" stroke-width="1.6" stroke-linecap="round"><circle cx="8" cy="8" r="5.5"/><path d="M8 6v2.5l1.5 1.5"/></svg>`;
+}
+
+async function loadPreview(){
+  try{
+    const [wR,nR,pR] = await Promise.all([
+      dbGet('workouts',`user_id=eq.${user.id}`),
+      dbGet('nutrition',`user_id=eq.${user.id}`),
+      dbGet('progress',`user_id=eq.${user.id}&limit=1`)
+    ]);
+    allData = {workouts:wR||[], nutrition:nR||[], progress:pR&&pR[0]?pR[0].records:[]};
+    const fw = allData.workouts.filter(r=>r.exercises?.length>0);
+    const fn = allData.nutrition.filter(r=>r.meals?.some(m=>m.name));
+    const prs = allData.progress||[];
+    const body = allData.nutrition.find(r=>r.body_params?.weight)?.body_params||{};
+
+    document.getElementById('dpg').innerHTML = `
+      <div class="dp-block">
+        <div class="dp-hd">
+          <div class="dp-ico w"><svg viewBox="0 0 16 16" fill="none" stroke="var(--cream)" stroke-width="1.6" stroke-linecap="round"><path d="M2 8h12M4 5.5l-2 2.5 2 2.5M12 5.5l2 2.5-2 2.5"/></svg></div>
+          <div class="dp-ttl">Тренировки</div>
+        </div>
+        ${fw.length ? fw.slice(0,3).map(r=>`<div class="dp-item">${DM[r.day]||r.day}<span>${r.exercises.length} упр.</span></div>`).join('') : '<div class="dp-empty">не заполнено</div>'}
+        <a class="dp-link" href="workout.html">изменить →</a>
+      </div>
+      <div class="dp-block">
+        <div class="dp-hd">
+          <div class="dp-ico n"><svg viewBox="0 0 16 16" fill="none" stroke="var(--blue)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2v5a3 3 0 006 0V2"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="5" y1="14" x2="11" y2="14"/></svg></div>
+          <div class="dp-ttl">Питание</div>
+        </div>
+        ${body.weight ? `<div class="dp-item">Вес<span>${body.weight} кг</span></div>` : ''}
+        ${fn.length ? fn.slice(0,2).map(r=>{const k=r.meals.reduce((s,m)=>s+(+m.kcal||0),0);return`<div class="dp-item">${r.day.slice(0,2)}<span>${k} ккал</span></div>`;}).join('') : '<div class="dp-empty">не заполнено</div>'}
+        <a class="dp-link" href="nutrition.html">изменить →</a>
+      </div>
+      <div class="dp-block">
+        <div class="dp-hd">
+          <div class="dp-ico p"><svg viewBox="0 0 16 16" fill="none" stroke="var(--green)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,12 6,7.5 9.5,9.5 14,4"/><polyline points="11,4 14,4 14,7"/></svg></div>
+          <div class="dp-ttl">Прогресс</div>
+        </div>
+        ${prs.length ? prs.slice(0,3).map(p=>`<div class="dp-item">${p.exercise}<span>${p.weight} кг</span></div>`).join('') : '<div class="dp-empty">не заполнено</div>'}
+        <a class="dp-link" href="progress.html">изменить →</a>
+      </div>`;
+  } catch(e){ console.error(e); }
+}
+
+function buildCtx(){
+  const {workouts, nutrition, progress} = allData;
+  let c = '=== ДАННЫЕ ===\n\n';
+  const body = nutrition.find(r=>r.body_params?.weight)?.body_params||{};
+  c += `ТЕЛО: Вес ${body.weight||'н/у'}кг, Рост ${body.height||'н/у'}см, Возраст ${body.age||'н/у'}лет\n\nТРЕНИРОВКИ:\n`;
+  const fw = workouts.filter(r=>r.exercises?.length);
+  if(fw.length) fw.forEach(r=>{ c+=`${DF[r.day]||r.day}: ${r.exercises.map(e=>`${e.name}(${e.sets}×${e.reps}${e.weight?','+e.weight+'кг':''})`).join(', ')}\n`; });
+  else c += 'не заполнено\n';
+  c += '\nПИТАНИЕ:\n';
+  const fn = nutrition.filter(r=>r.meals?.some(m=>m.name));
+  if(fn.length) fn.forEach(r=>{ const k=r.meals.reduce((s,m)=>s+(+m.kcal||0),0); c+=`${r.day}: ${r.meals.filter(m=>m.name).map(m=>m.name+(m.kcal?' ('+m.kcal+'кк)':'')).join(', ')} [${k}ккал]\n`; });
+  else c += 'не заполнено\n';
+  c += '\nПОКАЗАТЕЛИ:\n';
+  if(progress?.length) progress.forEach(p=>{ const prev=p.history?.length>=2?p.history[p.history.length-2].weight:null; c+=`${p.exercise} ${p.type==='record'?'(рекорд)':'(рабочий)'}: ${p.weight}кг${p.reps?' × '+p.reps:''}${prev?' → прогресс +'+(p.weight-prev)+'кг':''}\n`; });
+  else c += 'не заполнено\n';
+  return c;
+}
+
+let ldTmr;
+function startAnim(){
+  const steps = ['ls1','ls2','ls3','ls4']; let i = 0;
+  steps.forEach(id => {
+    const el = document.getElementById(id);
+    el.className = 'ls';
+    el.querySelector('.ls-icon').textContent = '○';
+  });
+  document.getElementById('ls1').className = 'ls active';
+  document.getElementById('ls1').querySelector('.ls-icon').textContent = '◉';
+  ldTmr = setInterval(()=>{
+    if(i < steps.length){
+      const cur = document.getElementById(steps[i]);
+      cur.className = 'ls done';
+      cur.querySelector('.ls-icon').textContent = '✓';
+      i++;
+      if(i < steps.length){
+        const nxt = document.getElementById(steps[i]);
+        nxt.className = 'ls active';
+        nxt.querySelector('.ls-icon').textContent = '◉';
+      }
+    }
+  }, 900);
+}
+
+async function startAI(){
+  // Check if API key is available
+  if (!config.hasApiKey()) {
+    const key = await config.promptForApiKey();
+    if (!key) {
+      alert('Для работы ИИ-анализа необходим API ключ');
+      return;
+    }
+  }
+
+  document.getElementById('azwrap').style.display = 'none';
+  document.getElementById('ressec').style.display = 'none';
+  document.getElementById('errbox').style.display = 'none';
+  document.getElementById('ldwrap').style.display = 'block';
+  startAnim();
+  const ctx = buildCtx();
+  const prompt = `Ты персональный ИИ-тренер. Отвечай по-русски, конкретно, без воды.\n\n${ctx}\n\nОтветь ТОЛЬКО чистым JSON (без markdown):\n{"overall_score":<1-100>,"overall_verdict":"<одно конкретное предложение>","sections":[{"title":"Тренировки","score_label":"<Огонь/Норм/Есть вопросы/Слабо>","score_type":"<good/ok/warn/bad>","content":"<честный анализ 3-4 абзаца>"},{"title":"Питание","score_label":"...","score_type":"...","content":"..."},{"title":"Прогресс","score_label":"...","score_type":"...","content":"..."},{"title":"Что делать прямо сейчас","score_label":"Действуй","score_type":"ok","content":"<3-5 конкретных пунктов>"},{"title":"Отдых и восстановление","score_label":"...","score_type":"...","content":"..."}]}`;
+  try{
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+config.getApiKey()},
+      body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:1500,messages:[{role:'user',content:prompt}]})
+    });
+    const d = await res.json(); clearInterval(ldTmr);
+    const txt = d.choices?.[0]?.message?.content;
+    if(!txt) throw new Error('пустой ответ');
+    const parsed = JSON.parse(txt.replace(/```json|```/g,'').trim());
+    renderResult(parsed);
+  } catch(e){
+    clearInterval(ldTmr);
+    document.getElementById('ldwrap').style.display = 'none';
+    document.getElementById('errbox').style.display = 'block';
+    document.getElementById('errmsg').textContent = 'Ошибка: ' + e.message;
+    document.getElementById('azwrap').style.display = 'block';
+  }
+}
+
+function renderResult(data){
+  document.getElementById('ldwrap').style.display = 'none';
+  const sec = document.getElementById('ressec'); sec.style.display = 'block';
+  const now = new Date().toLocaleString('ru',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'});
+
+  let html = `
+  <div class="rtop">
+    <div>
+      <div class="rttl">Анализ готов</div>
+      <div class="rmeta">${now}</div>
+    </div>
+    <button class="btn btn-ghost" onclick="resetUI()" style="font-size:13px;padding:9px 18px">Обновить</button>
+  </div>
+  <div class="overall">
+    <div class="ov-score-wrap">
+      <span class="ov-score">${data.overall_score}</span>
+      <div class="ov-max">/ 100</div>
+    </div>
+    <div>
+      <div class="ov-label">Общая оценка</div>
+      <div class="ov-verdict">${data.overall_verdict}</div>
+    </div>
+  </div>
+  <div class="rcards">`;
+
+  data.sections.forEach((s,i) => {
+    const body = s.content
+      .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+      .replace(/\n\n/g,'</p><p>')
+      .replace(/\n(\d+\.)/g,'</p><p>$1')
+      .replace(/\n/g,' ');
+    const icon = getIcon(s.title);
+    html += `
+    <div class="rc${i===0?' open':''}" id="rc${i}">
+      <div class="rch" onclick="toggleRC(${i})">
+        <div class="rch-ico">${icon}</div>
+        <span class="rch-ttl">${s.title}</span>
+        <span class="rch-sc ${s.score_type}">${s.score_label}</span>
+        <div class="rch-arr">▾</div>
+      </div>
+      <div class="rcb"><p>${body}</p></div>
+    </div>`;
+  });
+
+  html += '</div>';
+  sec.innerHTML = html;
+}
+
+function toggleRC(i){ document.getElementById('rc'+i).classList.toggle('open'); }
+function resetUI(){ document.getElementById('ressec').style.display='none'; document.getElementById('azwrap').style.display='block'; }
+loadPreview();
+</script>
+<script>
+function toggleNavMenu(){
+  var links = document.querySelector('.nav-links');
+  if(!links) return;
+  links.classList.toggle('mobile-open');
+}
+
+(function(){
+  function navigate(url){ document.body.classList.add('leaving'); setTimeout(function(){ window.location.href=url; },180); }
+  document.addEventListener('click',function(e){
+    var a=e.target.closest('a'); if(!a) return;
+    var href=a.getAttribute('href');
+    if(!href||href.charAt(0)==='#'||href.startsWith('http')||href.startsWith('mailto')||a.target==='_blank') return;
+    e.preventDefault(); navigate(href);
+  });
+})();
+</script>
+<script>
+(function(){
+  var el=document.getElementById('main-content'); if(!el) return;
+  var revealed=false;
+  function reveal(){ if(revealed) return; revealed=true; requestAnimationFrame(function(){ el.style.opacity='1'; }); }
+  setTimeout(reveal,400);
+  var obs=new MutationObserver(function(){ reveal(); obs.disconnect(); });
+  obs.observe(el,{childList:true,subtree:true});
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Тренировки — IronTrack</title>
+<link rel="stylesheet" href="_style.css"/>
+<style>
+body { overflow-x: hidden; }
+.pw { padding: 0; max-width: 100%; }
+
+/* SPLIT */
+.split { display: flex; min-height: 100vh; }
+
+/* SIDEBAR */
+.sidebar {
+  position: fixed; top: 60px; left: 0; bottom: 0; width: 260px;
+  background: var(--bg2); border-right: 1px solid var(--wire);
+  display: flex; flex-direction: column; z-index: 100;
+}
+.sb-header { padding: 24px 22px 16px; border-bottom: 1px solid var(--wire); }
+.sb-title { font-family: 'Instrument Serif', serif; font-size: 26px; font-weight: 400; color: var(--t0); margin-bottom: 3px; }
+.sb-sub { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--t2); letter-spacing: 2px; text-transform: uppercase; }
+.sb-progress { padding: 12px 22px; border-bottom: 1px solid var(--wire); }
+.wbar { height: 2px; background: var(--bg4); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
+.wfill { height: 100%; background: var(--cream); transition: width .4s; border-radius: 2px; }
+.wlbl { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--t2); display: flex; justify-content: space-between; }
+.sb-days { flex: 1; overflow-y: auto; padding: 6px 0; }
+.dbt {
+  width: 100%; padding: 13px 22px;
+  background: transparent; border: none;
+  display: flex; align-items: center; gap: 11px;
+  cursor: pointer; color: var(--t2);
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  text-align: left; transition: background .15s, color .15s;
+  position: relative;
+}
+.dbt:hover { background: var(--bg3); color: var(--t0); }
+.dbt.active { background: var(--bg3); color: var(--cream); font-weight: 500; }
+.dbt.active::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; background: var(--cream); border-radius: 0 2px 2px 0; }
+.ddot { width: 6px; height: 6px; border-radius: 50%; background: var(--bg5); flex-shrink: 0; transition: background .15s; }
+.dbt.has-data .ddot { background: var(--green); }
+.dbt.active .ddot { background: var(--cream); }
+.dname { flex: 1; }
+.dcnt { font-family: 'DM Mono', monospace; font-size: 11px; background: var(--bg4); color: var(--t1); padding: 2px 8px; border-radius: 4px; min-width: 24px; text-align: center; }
+.dbt.active .dcnt { background: var(--cream-a); color: var(--cream); }
+
+/* CONTENT */
+.content { margin-left: 260px; padding: 80px 44px 60px; flex: 1; }
+
+/* DAY HEADER */
+.dh { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; flex-wrap: wrap; gap: 14px; }
+.dttl { font-family: 'Instrument Serif', serif; font-size: 42px; font-weight: 400; line-height: 1; letter-spacing: -.5px; color: var(--t0); }
+.dsub { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--t3); margin-top: 5px; text-transform: uppercase; letter-spacing: 1.5px; }
+
+/* EXERCISE CARD */
+.excard {
+  background: var(--bg2); border: 1px solid var(--wire);
+  border-radius: 14px; padding: 18px 20px;
+  margin-bottom: 12px; transition: border-color .15s;
+}
+.excard:hover { border-color: var(--wire2); }
+
+.ex-top {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
+}
+.exidx {
+  width: 32px; height: 32px; flex-shrink: 0;
+  background: var(--cream-a); border: 1px solid rgba(232,220,200,.15);
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Mono', monospace; font-size: 12px; color: var(--cream);
+}
+.exsel {
+  flex: 1; font-weight: 500; font-size: 15px;
+  /* override global width:100% */
+  width: auto !important;
+}
+.exdel {
+  width: 32px; height: 32px; flex-shrink: 0;
+  background: rgba(217,112,112,.06); border: 1px solid rgba(217,112,112,.12);
+  border-radius: 8px; color: var(--red); font-size: 16px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
+}
+.exdel:hover { background: rgba(217,112,112,.18); }
+
+/* PARAMS ROW — horizontal */
+.exparams {
+  display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 12px;
+}
+.ep { display: flex; flex-direction: column; gap: 5px; }
+.ep label {
+  font-family: 'DM Mono', monospace; font-size: 9px;
+  color: var(--t3); letter-spacing: 1.5px; text-transform: uppercase;
+}
+.ep input {
+  width: 80px !important; text-align: center;
+  font-weight: 600; font-size: 15px; padding: 9px 10px;
+}
+.exnote input { color: var(--t2); font-size: 13px; }
+.exnote input::placeholder { color: var(--t3); }
+
+/* ADD */
+.add-ex {
+  width: 100%; padding: 14px;
+  background: transparent; border: 1px dashed var(--wire2);
+  border-radius: 14px; color: var(--t2);
+  font-family: 'DM Mono', monospace; font-size: 12px;
+  font-weight: 500; letter-spacing: 1px; text-transform: uppercase;
+  cursor: pointer; transition: all .15s; margin-top: 4px;
+}
+.add-ex:hover { background: var(--bg2); border-color: var(--wire3); color: var(--t0); }
+
+/* SUMMARY */
+.sumrow { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-top: 16px; }
+.sumbox { background: var(--bg2); border: 1px solid var(--wire); border-radius: 12px; padding: 16px 18px; text-align: center; }
+.sumn { font-family: 'Instrument Serif', serif; font-size: 40px; font-weight: 400; color: var(--cream); line-height: 1; }
+.suml { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--t3); margin-top: 5px; text-transform: uppercase; letter-spacing: 1px; }
+
+@media(max-width:860px){
+  .sidebar { position: static; width: 100%; height: auto; top: auto; flex-direction: column; }
+  .sb-days { display: flex; overflow-x: auto; flex-direction: row; padding: 0; }
+  .content { margin-left: 0; padding: 24px 20px; }
+  .dbt { flex-direction: column; align-items: center; padding: 12px 14px; min-width: 70px; gap: 6px; font-size: 12px; border-right: 1px solid var(--wire); min-height: 44px; }
+  .dbt.active::before { top: 0; left: 4px; right: 4px; bottom: auto; width: auto; height: 2px; }
+  .dttl { font-size: 32px; }
+  .excard { padding: 16px 18px; }
+  .exparams { gap: 10px; }
+  .ep input { width: 70px !important; }
+  .sumrow { grid-template-columns: 1fr; }
+}
+
+@media(max-width:480px){
+  .sidebar { padding: 0; }
+  .sb-header { padding: 16px 16px 12px; }
+  .sb-title { font-size: 20px; }
+  .sb-progress { padding: 10px 16px; }
+  .sb-days { padding: 0; }
+  .dbt { padding: 10px 12px; min-width: 60px; font-size: 11px; }
+  .content { padding: 20px 12px; }
+  .dh { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .dttl { font-size: 24px; }
+  .excard { padding: 14px 14px; margin-bottom: 10px; }
+  .ex-top { gap: 10px; margin-bottom: 12px; }
+  .exidx { width: 28px; height: 28px; font-size: 11px; }
+  .exdel { width: 28px; height: 28px; }
+  .exparams { gap: 8px; flex-wrap: wrap; }
+  .ep input { width: 60px !important; font-size: 13px; padding: 8px 8px; }
+  .ep label { font-size: 8px; }
+  .exnote input { font-size: 12px; }
+  .add-ex { padding: 12px; font-size: 11px; }
+  .sumn { font-size: 28px; }
+  .suml { font-size: 9px; }
+}
+</style>
+</head>
+<body>
+<div class="loader" id="loader">
+  <div class="loader-logo">Iron<em>Track</em></div>
+  <div class="loader-bar" aria-hidden="true"></div>
+</div>
+
+<nav class="nav">
+  <a class="nav-logo" href="index.html">Iron<span>Track</span></a>
+    <div class="nav-links">
+    <a href="index.html">Главная</a>
+    <a href="workout.html" class="active">Тренировки</a>
+    <a href="nutrition.html">Питание</a>
+    <a href="progress.html">Прогресс</a>
+    <a href="stats.html">Статистика</a>
+    <a href="diary.html">Дневник</a>
+    <a href="ai.html">ИИ</a>
+  </div>
+  <div class="nav-right">
+    <a href="profile.html" style="width:44px;height:44px;border-radius:50%;background:var(--bg3);border:1px solid var(--wire2);display:flex;align-items:center;justify-content:center;text-decoration:none;font-family:'Instrument Serif',serif;font-size:14px;color:var(--cream);transition:border-color .15s" id="nav-avatar">?</a><button class="nav-logout" onclick="doLogout()">Выйти</button>
+    <a class="nav-cta" href="ai.html">✦ Анализ</a>
+  </div>
+  <button class="nav-hamburger" id="nav-hamburger" onclick="toggleNavMenu()">☰</button>
+</nav>
+
+<div class="pw">
+  <div class="split">
+
+    <aside class="sidebar" id="sb">
+      <div class="sb-header">
+        <div class="sb-title">Тренировки</div>
+        <div class="sb-sub">Выбери день</div>
+      </div>
+      <div class="sb-progress">
+        <div class="wbar"><div class="wfill" id="wfill" style="width:0%"></div></div>
+        <div class="wlbl"><span>Заполнено</span><span id="wcnt">0 / 7 дней</span></div>
+      </div>
+      <div class="sb-days">
+        <button class="dbt active" onclick="sel(this,'mon')" data-day="mon"><span class="ddot"></span><span class="dname">Понедельник</span><span class="dcnt" id="cnt-mon">0</span></button>
+        <button class="dbt" onclick="sel(this,'tue')" data-day="tue"><span class="ddot"></span><span class="dname">Вторник</span><span class="dcnt" id="cnt-tue">0</span></button>
+        <button class="dbt" onclick="sel(this,'wed')" data-day="wed"><span class="ddot"></span><span class="dname">Среда</span><span class="dcnt" id="cnt-wed">0</span></button>
+        <button class="dbt" onclick="sel(this,'thu')" data-day="thu"><span class="ddot"></span><span class="dname">Четверг</span><span class="dcnt" id="cnt-thu">0</span></button>
+        <button class="dbt" onclick="sel(this,'fri')" data-day="fri"><span class="ddot"></span><span class="dname">Пятница</span><span class="dcnt" id="cnt-fri">0</span></button>
+        <button class="dbt" onclick="sel(this,'sat')" data-day="sat"><span class="ddot"></span><span class="dname">Суббота</span><span class="dcnt" id="cnt-sat">0</span></button>
+        <button class="dbt" onclick="sel(this,'sun')" data-day="sun"><span class="ddot"></span><span class="dname">Воскресенье</span><span class="dcnt" id="cnt-sun">0</span></button>
+      </div>
+    </aside>
+
+    <div class="content">
+      <div class="dh">
+        <div>
+          <div class="dttl" id="dttl">Понедельник</div>
+          <div class="dsub" id="dsub">день отдыха</div>
+        </div>
+        <button class="btn btn-lime" id="savebtn" onclick="saveDay()">Сохранить день</button>
+      </div>
+
+      <div id="exlist"></div>
+      <button class="add-ex" onclick="addEx()">+ добавить упражнение</button>
+
+      <div class="sumrow" id="sumrow" style="display:none">
+        <div class="sumbox"><div class="sumn" id="su-ex">0</div><div class="suml">упражнений</div></div>
+        <div class="sumbox"><div class="sumn" id="su-s">0</div><div class="suml">подходов</div></div>
+        <div class="sumbox"><div class="sumn" id="su-r">0</div><div class="suml">повторений</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="config.js"></script>
+<script src="_supabase.js"></script>
+<script>
+requireAuth(); const user = getUser();
+async function doLogout(){ await signOut(); window.location.href='login.html'; }
+
+const DN = {mon:'Понедельник',tue:'Вторник',wed:'Среда',thu:'Четверг',fri:'Пятница',sat:'Суббота',sun:'Воскресенье'};
+const EX = ['Жим лёжа','Жим гантелей лёжа','Разводка гантелей','Жим под углом','Кроссовер','Приседания со штангой','Приседания в Смите','Жим ногами','Выпады','Болгарские выпады','Румынская тяга','Становая тяга','Становая тяга сумо','Гиперэкстензия','Подтягивания','Тяга верхнего блока','Тяга нижнего блока','Тяга штанги в наклоне','Тяга гантели','Жим стоя','Разведение в стороны','Жим Арнольда','Сгибания на бицепс','Молотки','Французский жим','Разгибания на блоке','Отжимания на брусьях','Икры стоя','Подъём ног','Планка','Скручивания'];
+let cur = 'mon', data = {}, rowIds = {};
+
+async function init(){
+  try{
+    const rows = await dbGet('workouts', `user_id=eq.${user.id}`);
+    (rows||[]).forEach(r => { data[r.day] = r.exercises||[]; rowIds[r.day] = r.id; });
+  } catch(e){ console.error(e); }
+  render();
+}
+
+function sel(btn, day){
+  document.querySelectorAll('.dbt').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  cur = day;
+  render();
+}
+
+function render(){
+  const exs = data[cur] || [];
+  document.getElementById('dttl').textContent = DN[cur];
+  document.getElementById('dsub').textContent = exs.length ? exs.length + ' упр. запланировано' : 'день отдыха';
+
+  document.getElementById('exlist').innerHTML = exs.length
+    ? exs.map((ex, i) => {
+        const opts = EX.map(e => `<option${e===ex.name?' selected':''}>${e}</option>`).join('');
+        return `
+        <div class="excard">
+          <div class="ex-top">
+            <div class="exidx">${i+1}</div>
+            <select class="exsel" onchange="upEx(${i},'name',this.value)">${opts}</select>
+            <button class="exdel" onclick="delEx(${i})">×</button>
+          </div>
+          <div class="exparams">
+            <div class="ep"><label>Подходы</label><input type="number" min="1" max="20" value="${ex.sets||3}" onchange="upEx(${i},'sets',+this.value)"/></div>
+            <div class="ep"><label>Повторы</label><input type="number" min="1" max="100" value="${ex.reps||10}" onchange="upEx(${i},'reps',+this.value)"/></div>
+            <div class="ep"><label>Вес кг</label><input type="number" min="0" step="2.5" value="${ex.weight||''}" placeholder="—" onchange="upEx(${i},'weight',+this.value)"/></div>
+            <div class="ep"><label>Отдых с</label><input type="number" min="0" step="15" value="${ex.rest||90}" onchange="upEx(${i},'rest',+this.value)"/></div>
+          </div>
+          <div class="exnote"><input type="text" placeholder="заметка..." value="${ex.note||''}" oninput="upEx(${i},'note',this.value)"/></div>
+        </div>`;
+      }).join('')
+    : `<div class="empty-state"><p>Добавь упражнения или оставь как день отдыха</p></div>`;
+
+  const sm = document.getElementById('sumrow');
+  if(exs.length){
+    sm.style.display = 'grid';
+    document.getElementById('su-ex').textContent = exs.length;
+    document.getElementById('su-s').textContent = exs.reduce((s,e) => s+(+e.sets||0), 0);
+    document.getElementById('su-r').textContent = exs.reduce((s,e) => s+((+e.sets||0)*(+e.reps||0)), 0);
+  } else sm.style.display = 'none';
+  updSb();
+}
+
+function addEx(){ if(!data[cur])data[cur]=[]; data[cur].push({name:EX[0],sets:3,reps:10,weight:0,rest:90,note:''}); render(); }
+function delEx(i){ data[cur].splice(i,1); render(); }
+function upEx(i,f,v){ if(data[cur]) data[cur][i][f]=v; }
+
+function updSb(){
+  let f = 0;
+  Object.keys(DN).forEach(d => {
+    const c = (data[d]||[]).length;
+    const el = document.getElementById('cnt-'+d); if(el) el.textContent = c;
+    const btn = document.querySelector(`[data-day="${d}"]`);
+    if(btn) btn.classList.toggle('has-data', c>0);
+    if(c>0) f++;
+  });
+  document.getElementById('wfill').style.width = Math.round(f/7*100)+'%';
+  document.getElementById('wcnt').textContent = f+' / 7 дней';
+}
+
+async function saveDay(){
+  const btn = document.getElementById('savebtn');
+  btn.disabled = true; btn.innerHTML = '<div class="spin"></div>';
+  try{
+    const p = {user_id:user.id, day:cur, exercises:data[cur]||[], updated_at:new Date().toISOString()};
+    if(rowIds[cur]) p.id = rowIds[cur];
+    const res = await dbUpsert('workouts', p);
+    if(res && res[0] && !rowIds[cur]) rowIds[cur] = res[0].id;
+    toast('сохранено','ok');
+  } catch(e){ toast('ошибка: '+e.message,'err'); }
+  finally{ btn.disabled=false; btn.innerHTML='Сохранить день'; }
+}
+
+function toast(msg,tp){ const t=document.getElementById('toast'); t.textContent=msg; t.className='toast show '+tp; setTimeout(()=>t.className='toast',2200); }
+init();
+</script>
+<script>
+function toggleNavMenu(){
+  var links = document.querySelector('.nav-links');
+  if(!links) return;
+  links.classList.toggle('mobile-open');
+}
+
+(function(){
+  function navigate(url){
+    document.body.classList.add('leaving');
+    setTimeout(function(){ window.location.href = url; }, 180);
+  }
+  document.addEventListener('click', function(e){
+    var a = e.target.closest('a');
+    if(!a) return;
+    var href = a.getAttribute('href');
+    if(!href || href.charAt(0)==='#' || href.startsWith('http') || href.startsWith('mailto') || a.target==='_blank') return;
+    e.preventDefault();
+    navigate(href);
+  });
+})();
+</script>
+
+</body>
+</html>
